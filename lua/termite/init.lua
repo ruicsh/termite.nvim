@@ -22,6 +22,13 @@ local M = {}
 
 M.setup = function(opts)
 	config.setup(opts)
+
+	local km = config.values.keymaps
+	if km.toggle then
+		vim.keymap.set("n", km.toggle, function()
+			M.toggle()
+		end, { desc = "Termite: Toggle" })
+	end
 end
 
 -- }}}
