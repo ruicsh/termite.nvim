@@ -46,8 +46,8 @@ require("termite").setup({
   keymaps = {
     toggle = "<C-\\>",   -- Toggle all terminals (terminal mode)
     create = "<C-t>",    -- Create new terminal
-    next = "<C-j>",      -- Focus next terminal in stack
-    prev = "<C-k>",      -- Focus previous terminal in stack
+    next = "<C-n>",      -- Focus next terminal in stack
+    prev = "<C-p>",      -- Focus previous terminal in stack
     focus_editor = "<C-h>",  -- Return focus to editor window
     normal_mode = "<C-[>",   -- Exit terminal insert mode
     maximize = "<C-z>",      -- Maximize/restore focused terminal
@@ -80,8 +80,8 @@ Default keymaps:
 | -------- | ------- | ------------------------- |
 | Terminal | `<C-\>` | Toggle all terminals      |
 | Terminal | `<C-t>` | Create new terminal       |
-| Terminal | `<C-j>` | Focus next terminal       |
-| Terminal | `<C-k>` | Focus previous terminal   |
+| Terminal | `<C-n>` | Focus next terminal       |
+| Terminal | `<C-p>` | Focus previous terminal   |
 | Terminal | `<C-h>` | Focus editor window       |
 | Terminal | `<C-[>` | Exit to normal mode       |
 | Terminal | `<C-z>` | Maximize/restore terminal |
