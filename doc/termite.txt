@@ -72,7 +72,7 @@ Default configuration:
       create = "<C-t>",    -- Create new terminal
       next = "<C-j>",      -- Focus next terminal
       prev = "<C-k>",      -- Focus previous terminal
-      focus_editor = "<C-h>",  -- Focus editor window
+      focus_editor = "<C-e>",  -- Focus editor window
       normal_mode = "<C-[>",   -- Exit to normal mode
       maximize = "<C-z>",      -- Maximize/restore terminal
       close = "q",             -- Close terminal (normal mode)
@@ -149,7 +149,7 @@ To customize, pass a keymaps table to setup():
       create = "<C-t>",
       next = "<C-j>",
       prev = "<C-k>",
-      focus_editor = "<C-h>",
+      focus_editor = "<C-e>",
       normal_mode = "<C-[>",
       maximize = "<C-z>",
       close = "q",
@@ -173,7 +173,7 @@ Default keymaps:
     <C-t>       Create new terminal
     <C-j>       Focus next terminal
     <C-k>       Focus previous terminal
-    <C-h>       Focus editor window
+    <C-e>       Focus editor window
     <C-[>       Exit to normal mode
     <C-z>       Maximize/restore terminal
 
