@@ -44,9 +44,9 @@ M.get_win_config = function(index, total)
 	local border
 	if index < total then
 		if is_left then
-			border = { "", "", chars.vertical, chars.vertical, chars.vertical, chars.horizontal, "", "" }
+			border = { "", "", chars.vertical, chars.vertical, chars.vertical_right, chars.horizontal, "", "" }
 		else
-			border = { "", "", "", "", chars.horizontal, chars.horizontal, chars.vertical, chars.vertical }
+			border = { "", "", "", "", chars.horizontal, chars.horizontal, chars.vertical_left, chars.vertical }
 		end
 	else
 		-- Last terminal: no bottom border.

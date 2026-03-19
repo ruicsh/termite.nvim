@@ -4,12 +4,12 @@
 local M = {}
 
 local BORDER_STYLES = {
-	light = { vertical = "│", horizontal = "─" },
-	heavy = { vertical = "┃", horizontal = "━" },
-	double = { vertical = "║", horizontal = "═" },
-	["double-dash"] = { vertical = "╎", horizontal = "╌" },
-	["triple-dash"] = { vertical = "┆", horizontal = "┄" },
-	["quadruple-dash"] = { vertical = "┊", horizontal = "┈" },
+	light = { vertical = "│", horizontal = "─", vertical_left = "├", vertical_right = "┤" },
+	heavy = { vertical = "┃", horizontal = "━", vertical_left = "┣", vertical_right = "┫" },
+	double = { vertical = "║", horizontal = "═", vertical_left = "╠", vertical_right = "╣" },
+	["double-dash"] = { vertical = "╎", horizontal = "╌", vertical_left = "╟", vertical_right = "╢" },
+	["triple-dash"] = { vertical = "┆", horizontal = "┄", vertical_left = "┝", vertical_right = "┥" },
+	["quadruple-dash"] = { vertical = "┊", horizontal = "┈", vertical_left = "┝", vertical_right = "┥" },
 }
 
 local DEFAULTS = {
