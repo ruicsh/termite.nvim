@@ -73,6 +73,13 @@ local function restore_from_maximized()
 	end
 end
 
+-- Focus the saved editor window.
+local function focus_editor_window()
+	if state.last_editor_winnr and vim.api.nvim_win_is_valid(state.last_editor_winnr) then
+		vim.api.nvim_set_current_win(state.last_editor_winnr)
+	end
+end
+
 -- }}}
 
 -- Terminal actions {{{
@@ -101,8 +108,15 @@ M.remove_terminal = function(term)
 
 	if #state.terminals == 0 then
 		state.visible = false
+		focus_editor_window()
 	elseif state.visible then
 		layout.reflow()
+		local focus_idx = removed_idx and removed_idx > 1 and removed_idx - 1 or 1
+		focus_idx = math.min(focus_idx, #state.terminals)
+		local focus_term = state.terminals[focus_idx]
+		if focus_term and focus_term.win and vim.api.nvim_win_is_valid(focus_term.win) then
+			vim.api.nvim_set_current_win(focus_term.win)
+		end
 	end
 end
 
