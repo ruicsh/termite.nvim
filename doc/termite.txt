@@ -225,7 +225,7 @@ termite.toggle_maximize()                               *termite-toggle_maximize
   Maximize the focused terminal to full height, or restore if already
   maximized.
 
-termite.setup({config})                                 *termite-setup()*
+termite.setup({config})
   Configure the plugin. See |termite-configuration|.
 
 ================================================================================
