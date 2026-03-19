@@ -29,6 +29,11 @@ M.setup = function(opts)
 			M.toggle()
 		end, { desc = "Termite: Toggle" })
 	end
+	if km.create then
+		vim.keymap.set("n", km.create, function()
+			M.create()
+		end, { desc = "Termite: Create" })
+	end
 end
 
 -- }}}
