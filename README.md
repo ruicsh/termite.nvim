@@ -7,7 +7,7 @@ Stacking float terminal manager for Neovim.
 
 ## Features
 
-- **Vertically stacked floating terminals** on the right side of the editor
+- **Vertically stacked floating terminals** on the left or right side of the editor
 - **Toggle all terminals** (show/hide) with a single key
 - **Create multiple terminals** that automatically resize and reflow
 - **Navigate between terminals** with next/previous keys
@@ -36,8 +36,8 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 ```lua
 require("termite").setup({
   width = 0.5,           -- Fraction of editor width (0.0 - 1.0)
-  position = "right",    -- Panel position (only "right" supported currently)
-  border = "│",          -- Left border character
+  position = "right",    -- Panel position: "left" or "right"
+  border = "│",          -- Border character on the side facing the editor
   separator = "─",       -- Horizontal separator between stacked terminals
   shell = nil,           -- Shell command (nil = default $SHELL)
   start_insert = true,   -- Enter insert mode when focusing a terminal

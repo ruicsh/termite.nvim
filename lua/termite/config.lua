@@ -5,7 +5,7 @@ local M = {}
 
 local DEFAULTS = {
 	width = 0.5, -- Fraction of editor width.
-	position = "right", -- Panel position (only "right" supported for now).
+	position = "right", -- Panel position: "left" or "right".
 	border = "│", -- Left border character.
 	separator = "─", -- Horizontal separator between stacked terminals.
 	shell = nil, -- Shell command (nil = default shell).

@@ -38,19 +38,28 @@ M.get_win_config = function(index, total)
 		height = usable_height - (each_height * (total - 1))
 	end
 
-	-- Border: left border always, bottom separator between stacked terminals,
-	-- invisible bottom border for the last terminal.
+	-- Border configuration based on position.
+	local is_left = opts.position == "left"
 	local border
 	if index < total then
-		border = { "", "", "", "", opts.separator, opts.separator, opts.border, opts.border }
+		if is_left then
+			border = { "", "", opts.border, opts.border, opts.border, opts.separator, "", "" }
+		else
+			border = { "", "", "", "", opts.separator, opts.separator, opts.border, opts.border }
+		end
 	else
-		border = { "", "", "", "", " ", " ", " ", opts.border }
+		-- Last terminal: no bottom border.
+		if is_left then
+			border = { "", "", opts.border, opts.border, " ", " ", "", "" }
+		else
+			border = { "", "", "", "", " ", " ", " ", opts.border }
+		end
 	end
 
 	return {
-		anchor = "NE",
+		anchor = is_left and "NW" or "NE",
 		border = border,
-		col = editor_width,
+		col = is_left and 0 or editor_width,
 		height = height,
 		relative = "editor",
 		row = row,

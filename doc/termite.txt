@@ -19,7 +19,7 @@ vertically stacked floating terminal windows on the right side of the editor,
 allowing you to manage multiple shell sessions with ease.
 
 Features:
-- Vertically stacked floating terminals on the right side
+- Vertically stacked floating terminals on the left or right side
 - Toggle all terminals (show/hide) with a single key
 - Create multiple terminals that automatically resize and reflow
 - Navigate between terminals (next/previous)
@@ -60,8 +60,8 @@ Default configuration:
 >
   {
     width = 0.5,           -- Fraction of editor width (0.0 - 1.0)
-    position = "right",    -- Panel position (only "right" currently)
-    border = "│",          -- Left border character
+    position = "right",    -- Panel position: "left" or "right"
+    border = "│",          -- Border on the side facing the editor
     separator = "─",       -- Horizontal separator between terminals
     shell = nil,           -- Shell command (nil = $SHELL)
     start_insert = true,   -- Enter insert mode when focusing terminal
@@ -92,12 +92,12 @@ width (number)
 
 *termite-config-position*
 position (string)
-  Panel position. Currently only "right" is supported.
+  Panel position. "left" or "right".
   Default: "right"
 
 *termite-config-border*
 border (string)
-  Character used for the left border of terminals.
+  Character used for the border on the side facing the editor.
   Default: "│"
 
 *termite-config-separator*
