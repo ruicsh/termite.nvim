@@ -1,0 +1,217 @@
+*termite.txt*  Stacking float terminal manager for Neovim
+
+================================================================================
+CONTENTS                                                  *termite-contents*
+
+1. Introduction .................... |termite-introduction|
+2. Requirements .................... |termite-requirements|
+3. Installation .................... |termite-installation|
+4. Configuration ................... |termite-configuration|
+5. Keymaps ......................... |termite-keymaps|
+6. Commands ........................ |termite-commands|
+7. API ............................. |termite-api|
+
+================================================================================
+1. INTRODUCTION                                      *termite-introduction*
+
+termite.nvim is a stacking float terminal manager for Neovim. It provides
+vertically stacked floating terminal windows on the right side of the editor,
+allowing you to manage multiple shell sessions with ease.
+
+Features:
+- Vertically stacked floating terminals on the right side
+- Toggle all terminals (show/hide) with a single key
+- Create multiple terminals that automatically resize and reflow
+- Navigate between terminals (next/previous)
+- Maximize/restore individual terminals to full height
+- Focus editor while keeping terminals visible
+- Custom shell support
+- Full keymap customization
+
+================================================================================
+2. REQUIREMENTS                                      *termite-requirements*
+
+- Neovim >= 0.7.0
+
+================================================================================
+3. INSTALLATION                                      *termite-installation*
+
+Using lazy.nvim (https://github.com/folke/lazy.nvim):
+>
+  {
+    "ruic/termite.nvim",
+    config = function()
+      require("termite").setup()
+    end,
+  }
+<
+
+================================================================================
+4. CONFIGURATION                                    *termite-configuration*
+
+termite.setup({config})                                    *termite-setup()*
+
+Configure the plugin with custom options.
+
+Parameters:
+  {config}  Table of configuration options (optional)
+
+Default configuration:
+>
+  {
+    width = 0.5,           -- Fraction of editor width (0.0 - 1.0)
+    position = "right",    -- Panel position (only "right" currently)
+    border = "│",          -- Left border character
+    separator = "─",       -- Horizontal separator between terminals
+    shell = nil,           -- Shell command (nil = $SHELL)
+    start_insert = true,   -- Enter insert mode when focusing terminal
+
+    keymaps = {
+      toggle = "<C-\\>",   -- Toggle all terminals
+      create = "<C-t>",    -- Create new terminal
+      next = "<C-j>",      -- Focus next terminal
+      prev = "<C-k>",      -- Focus previous terminal
+      focus_editor = "<C-h>",  -- Focus editor window
+      normal_mode = "<C-[>",   -- Exit to normal mode
+      maximize = "<C-z>",      -- Maximize/restore terminal
+      close = "q",             -- Close terminal (normal mode)
+    },
+
+    wo = {
+      signcolumn = "yes:1",
+    },
+  }
+<
+
+Configuration options:
+
+*termite-config-width*
+width (number)
+  Fraction of editor width for the terminal panel (0.0 - 1.0).
+  Default: 0.5
+
+*termite-config-position*
+position (string)
+  Panel position. Currently only "right" is supported.
+  Default: "right"
+
+*termite-config-border*
+border (string)
+  Character used for the left border of terminals.
+  Default: "│"
+
+*termite-config-separator*
+separator (string)
+  Character used for horizontal separators between stacked terminals.
+  Default: "─"
+
+*termite-config-shell*
+shell (string|nil)
+  Shell command to use. nil uses the default $SHELL.
+  Default: nil
+
+*termite-config-start_insert*
+start_insert (boolean)
+  Whether to automatically enter insert mode when focusing a terminal.
+  Default: true
+
+*termite-config-keymaps*
+keymaps (table)
+  Buffer-local keymaps for terminal windows. Set to false to disable.
+  See |termite-keymaps|.
+
+*termite-config-wo*
+wo (table)
+  Window options applied to terminal windows.
+  Default: { signcolumn = "yes:1" }
+
+================================================================================
+5. KEYMAPS                                              *termite-keymaps*
+
+Keymaps are buffer-local and only active in terminal windows.
+
+To customize, pass a keymaps table to setup():
+>
+  require("termite").setup({
+    keymaps = {
+      toggle = "<C-\\>",
+      create = "<C-t>",
+      next = "<C-j>",
+      prev = "<C-k>",
+      focus_editor = "<C-h>",
+      normal_mode = "<C-[>",
+      maximize = "<C-z>",
+      close = "q",
+    },
+  })
+<
+
+To disable a keymap, set it to false:
+>
+  require("termite").setup({
+    keymaps = {
+      close = false,  -- Disable 'q' in normal mode
+    },
+  })
+<
+
+Default keymaps:
+
+  Terminal Mode:
+    <C-\\>      Toggle all terminals
+    <C-t>       Create new terminal
+    <C-j>       Focus next terminal
+    <C-k>       Focus previous terminal
+    <C-h>       Focus editor window
+    <C-[>       Exit to normal mode
+    <C-z>       Maximize/restore terminal
+
+  Normal Mode:
+    q           Close current terminal
+
+================================================================================
+6. COMMANDS                                            *termite-commands*
+
+:Termite [subcommand]                                     *:Termite*
+
+Run termite subcommands. Without a subcommand, defaults to "toggle".
+
+Subcommands:
+  toggle      Toggle all terminals (show/hide)
+  create      Create a new terminal
+  maximize    Maximize/restore the focused terminal
+  close       Close the focused terminal
+  next        Focus the next terminal in the stack
+  prev        Focus the previous terminal in the stack
+  editor      Focus the editor window
+
+================================================================================
+7. API                                                      *termite-api*
+
+termite.toggle()                                        *termite-toggle()*
+  Toggle all terminals (show/hide). If no terminals exist, creates one.
+
+termite.create()                                        *termite-create()*
+  Create a new terminal and add it to the stack.
+
+termite.focus_next()                                    *termite-focus_next()*
+  Focus the next terminal in the stack. Wraps around to first.
+
+termite.focus_prev()                                    *termite-focus_prev()*
+  Focus the previous terminal in the stack. Wraps around to last.
+
+termite.focus_editor()                                  *termite-focus_editor()*
+  Focus the editor window while keeping terminals visible.
+
+termite.close_current()                                 *termite-close_current()*
+  Close the currently focused terminal and remove it from the stack.
+
+termite.toggle_maximize()                               *termite-toggle_maximize()*
+  Maximize the focused terminal to full height, or restore if already
+  maximized.
+
+termite.setup({config})                                 *termite-setup()*
+  Configure the plugin. See |termite-configuration|.
+
+================================================================================
+vim:tw=78:ts=8:ft=help:norl:
