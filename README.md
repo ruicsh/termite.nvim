@@ -8,10 +8,11 @@ Stacking float terminal manager for Neovim.
 ## Features
 
 - **Vertically stacked floating terminals** on the left or right side of the editor
+- **Horizontally stacked floating terminals** on the top or bottom of the editor
 - **Toggle all terminals** (show/hide) with a single key
 - **Create multiple terminals** that automatically resize and reflow
 - **Navigate between terminals** with next/previous keys
-- **Maximize/restore** individual terminals to full height
+- **Maximize/restore** individual terminals to full height/width
 - **Focus editor** while keeping terminals visible
 - **Custom shell support** per terminal or global default
 - **Full keymap customization**
@@ -35,8 +36,9 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 
 ```lua
 require("termite").setup({
-  width = 0.5,           -- Fraction of editor width (0.0 - 1.0)
-  position = "right",    -- Panel position: "left" or "right"
+  width = 0.5,           -- Fraction of editor width for left/right positions (0.0 - 1.0)
+  height = 0.5,          -- Fraction of editor height for top/bottom positions (0.0 - 1.0)
+  position = "right",    -- Panel position: "left", "right", "top", or "bottom"
   border = "light",      -- Border style: "light", "heavy", "double", "double-dash", "triple-dash", "quadruple-dash"
   shell = nil,           -- Shell command (nil = default $SHELL)
   start_insert = true,   -- Enter insert mode when focusing a terminal
@@ -84,6 +86,13 @@ Default keymaps:
 | Terminal | `<C-[>` | Exit to normal mode       |
 | Terminal | `<C-z>` | Maximize/restore terminal |
 | Normal   | `q`     | Close current terminal    |
+
+Additionally, `toggle` and `create` keymaps are available in normal mode globally:
+
+| Mode   | Key     | Action               |
+| ------ | ------- | -------------------- |
+| Normal | `<C-\>` | Toggle all terminals |
+| Normal | `<C-t>` | Create new terminal  |
 
 ## Commands
 

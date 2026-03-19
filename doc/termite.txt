@@ -15,15 +15,16 @@ CONTENTS                                                  *termite-contents*
 1. INTRODUCTION                                      *termite-introduction*
 
 termite.nvim is a stacking float terminal manager for Neovim. It provides
-vertically stacked floating terminal windows on the right side of the editor,
-allowing you to manage multiple shell sessions with ease.
+vertically or horizontally stacked floating terminal windows, allowing you to
+manage multiple shell sessions with ease.
 
 Features:
 - Vertically stacked floating terminals on the left or right side
+- Horizontally stacked floating terminals on the top or bottom
 - Toggle all terminals (show/hide) with a single key
 - Create multiple terminals that automatically resize and reflow
 - Navigate between terminals (next/previous)
-- Maximize/restore individual terminals to full height
+- Maximize/restore individual terminals to full height/width
 - Focus editor while keeping terminals visible
 - Custom shell support
 - Full keymap customization
@@ -39,7 +40,7 @@ Features:
 Using lazy.nvim (https://github.com/folke/lazy.nvim):
 >
   {
-    "ruic/termite.nvim",
+    "ruicsh/termite.nvim",
     config = function()
       require("termite").setup()
     end,
@@ -59,10 +60,10 @@ Parameters:
 Default configuration:
 >
   {
-    width = 0.5,           -- Fraction of editor width (0.0 - 1.0)
-    position = "right",    -- Panel position: "left" or "right"
-    border = "│",          -- Border on the side facing the editor
-    separator = "─",       -- Horizontal separator between terminals
+    width = 0.5,           -- Fraction of editor width for left/right positions
+    height = 0.5,          -- Fraction of editor height for top/bottom positions
+    position = "right",    -- Panel position: "left", "right", "top", or "bottom"
+    border = "light",      -- Border style name (see |termite-config-border|)
     shell = nil,           -- Shell command (nil = $SHELL)
     start_insert = true,   -- Enter insert mode when focusing terminal
 
@@ -88,22 +89,30 @@ Configuration options:
 *termite-config-width*
 width (number)
   Fraction of editor width for the terminal panel (0.0 - 1.0).
+  Only applies when |termite-config-position| is "left" or "right".
+  Default: 0.5
+
+*termite-config-height*
+height (number)
+  Fraction of editor height for the terminal panel (0.0 - 1.0).
+  Only applies when |termite-config-position| is "top" or "bottom".
   Default: 0.5
 
 *termite-config-position*
 position (string)
-  Panel position. "left" or "right".
+  Panel position. One of "left", "right", "top", or "bottom".
   Default: "right"
 
 *termite-config-border*
 border (string)
-  Character used for the border on the side facing the editor.
-  Default: "│"
-
-*termite-config-separator*
-separator (string)
-  Character used for horizontal separators between stacked terminals.
-  Default: "─"
+  Border style name. One of:
+    - "light"           - Single line borders
+    - "heavy"           - Thick line borders
+    - "double"          - Double line borders
+    - "double-dash"     - Dashed lines, 2 dashes per segment
+    - "triple-dash"     - Dashed lines, 3 dashes per segment
+    - "quadruple-dash"  - Dashed lines, 4 dashes per segment
+  Default: "light"
 
 *termite-config-shell*
 shell (string|nil)
@@ -118,6 +127,7 @@ start_insert (boolean)
 *termite-config-keymaps*
 keymaps (table)
   Buffer-local keymaps for terminal windows. Set to false to disable.
+  Additionally, `toggle` and `create` are available in normal mode globally.
   See |termite-keymaps|.
 
 *termite-config-wo*
@@ -129,6 +139,7 @@ wo (table)
 5. KEYMAPS                                              *termite-keymaps*
 
 Keymaps are buffer-local and only active in terminal windows.
+Additionally, `toggle` and `create` are available globally in normal mode.
 
 To customize, pass a keymaps table to setup():
 >
@@ -166,8 +177,12 @@ Default keymaps:
     <C-[>       Exit to normal mode
     <C-z>       Maximize/restore terminal
 
-  Normal Mode:
+  Normal Mode (within terminal):
     q           Close current terminal
+
+  Normal Mode (global):
+    <C-\\>      Toggle all terminals
+    <C-t>       Create new terminal
 
 ================================================================================
 6. COMMANDS                                            *termite-commands*
