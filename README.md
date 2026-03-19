@@ -37,8 +37,7 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 require("termite").setup({
   width = 0.5,           -- Fraction of editor width (0.0 - 1.0)
   position = "right",    -- Panel position: "left" or "right"
-  border = "│",          -- Border character on the side facing the editor
-  separator = "─",       -- Horizontal separator between stacked terminals
+  border = "light",      -- Border style: "light", "heavy", "double", "double-dash", "triple-dash", "quadruple-dash"
   shell = nil,           -- Shell command (nil = default $SHELL)
   start_insert = true,   -- Enter insert mode when focusing a terminal
 

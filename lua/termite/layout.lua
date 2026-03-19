@@ -40,19 +40,20 @@ M.get_win_config = function(index, total)
 
 	-- Border configuration based on position.
 	local is_left = opts.position == "left"
+	local chars = config.get_border_chars()
 	local border
 	if index < total then
 		if is_left then
-			border = { "", "", opts.border, opts.border, opts.border, opts.separator, "", "" }
+			border = { "", "", chars.vertical, chars.vertical, chars.vertical, chars.horizontal, "", "" }
 		else
-			border = { "", "", "", "", opts.separator, opts.separator, opts.border, opts.border }
+			border = { "", "", "", "", chars.horizontal, chars.horizontal, chars.vertical, chars.vertical }
 		end
 	else
 		-- Last terminal: no bottom border.
 		if is_left then
-			border = { "", "", opts.border, opts.border, " ", " ", "", "" }
+			border = { "", "", chars.vertical, chars.vertical, " ", " ", "", "" }
 		else
-			border = { "", "", "", "", " ", " ", " ", opts.border }
+			border = { "", "", "", "", " ", " ", " ", chars.vertical }
 		end
 	end
 

@@ -3,11 +3,19 @@
 
 local M = {}
 
+local BORDER_STYLES = {
+	light = { vertical = "│", horizontal = "─" },
+	heavy = { vertical = "┃", horizontal = "━" },
+	double = { vertical = "║", horizontal = "═" },
+	["double-dash"] = { vertical = "╎", horizontal = "╌" },
+	["triple-dash"] = { vertical = "┆", horizontal = "┄" },
+	["quadruple-dash"] = { vertical = "┊", horizontal = "┈" },
+}
+
 local DEFAULTS = {
 	width = 0.5, -- Fraction of editor width.
 	position = "right", -- Panel position: "left" or "right".
-	border = "│", -- Left border character.
-	separator = "─", -- Horizontal separator between stacked terminals.
+	border = "light", -- Border style: "light", "heavy", "double", "double-dash", "triple-dash", "quadruple-dash".
 	shell = nil, -- Shell command (nil = default shell).
 	start_insert = true, -- Enter insert mode when focusing a terminal.
 	keymaps = {
@@ -29,6 +37,10 @@ M.values = vim.deepcopy(DEFAULTS)
 
 M.setup = function(opts)
 	M.values = vim.tbl_deep_extend("force", vim.deepcopy(DEFAULTS), opts or {})
+end
+
+M.get_border_chars = function()
+	return BORDER_STYLES[M.values.border] or BORDER_STYLES.light
 end
 
 return M
