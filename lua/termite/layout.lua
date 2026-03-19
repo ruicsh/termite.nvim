@@ -93,9 +93,9 @@ M.get_win_config = function(index, total)
 	local border
 	if index < total then
 		if position == "top" then
-			border = { "", "", chars.vertical, chars.vertical, chars.horizontal, chars.horizontal, chars.horizontal, "" }
+			border = { "", "", chars.vertical, chars.vertical, chars.horizontal_up, chars.horizontal, chars.horizontal, "" }
 		else
-			border = { chars.horizontal, chars.horizontal, chars.horizontal, chars.vertical, "", "", "", "" }
+			border = { chars.horizontal, chars.horizontal, chars.horizontal_down, chars.vertical, "", "", "", "" }
 		end
 	else
 		-- Last terminal: no right border.

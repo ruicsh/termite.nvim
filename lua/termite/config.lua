@@ -1,16 +1,9 @@
 -- termite.nvim
 -- Configuration defaults and setup.
 
-local M = {}
+local BORDER_STYLES = require("termite.borders")
 
-local BORDER_STYLES = {
-	light = { vertical = "│", horizontal = "─", vertical_left = "├", vertical_right = "┤" },
-	heavy = { vertical = "┃", horizontal = "━", vertical_left = "┣", vertical_right = "┫" },
-	double = { vertical = "║", horizontal = "═", vertical_left = "╠", vertical_right = "╣" },
-	["double-dash"] = { vertical = "╎", horizontal = "╌", vertical_left = "╟", vertical_right = "╢" },
-	["triple-dash"] = { vertical = "┆", horizontal = "┄", vertical_left = "┝", vertical_right = "┥" },
-	["quadruple-dash"] = { vertical = "┊", horizontal = "┈", vertical_left = "┝", vertical_right = "┥" },
-}
+local M = {}
 
 local DEFAULTS = {
 	width = 0.5, -- Fraction of editor width (for left/right positions).
