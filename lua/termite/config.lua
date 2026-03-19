@@ -13,8 +13,9 @@ local BORDER_STYLES = {
 }
 
 local DEFAULTS = {
-	width = 0.5, -- Fraction of editor width.
-	position = "right", -- Panel position: "left" or "right".
+	width = 0.5, -- Fraction of editor width (for left/right positions).
+	height = 0.5, -- Fraction of editor height (for top/bottom positions).
+	position = "right", -- Panel position: "left", "right", "top", or "bottom".
 	border = "light", -- Border style: "light", "heavy", "double", "double-dash", "triple-dash", "quadruple-dash".
 	shell = nil, -- Shell command (nil = default shell).
 	start_insert = true, -- Enter insert mode when focusing a terminal.

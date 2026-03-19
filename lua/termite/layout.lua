@@ -18,52 +18,101 @@ M.get_win_config = function(index, total)
 	if vim.o.showtabline == 2 or (vim.o.showtabline == 1 and #vim.api.nvim_list_tabpages() > 1) then
 		editor_height = editor_height - 1
 	end
-	local width = math.floor(editor_width * opts.width)
 
-	-- Every terminal has a bottom border row: separators between stacked terminals,
-	-- and an invisible (space) row for the last terminal. This prevents terminals from
-	-- gaining/losing border rows when siblings are added or removed, which would cause
-	-- the terminal emulator to detect a resize and shift the content.
-	local border_rows = total
-	local usable_height = editor_height - border_rows
-	local each_height = math.floor(usable_height / total)
+	local position = opts.position
+	local chars = config.get_border_chars()
 
-	-- Accumulate row position, accounting for borders of previous terminals.
-	-- Each terminal occupies `each_height` content rows + 1 row for the bottom border.
-	local row = (index - 1) * (each_height + 1)
+	-- Vertical stacking (left/right): terminals stack from top to bottom.
+	if position == "left" or position == "right" then
+		local width = math.floor(editor_width * opts.width)
 
-	-- Last terminal gets any remaining height to avoid a gap at the bottom.
-	local height = each_height
-	if index == total then
-		height = usable_height - (each_height * (total - 1))
+		-- Every terminal has a bottom border row: separators between stacked terminals,
+		-- and an invisible (space) row for the last terminal.
+		local border_rows = total
+		local usable_height = editor_height - border_rows
+		local each_height = math.floor(usable_height / total)
+
+		-- Accumulate row position, accounting for borders of previous terminals.
+		local row = (index - 1) * (each_height + 1)
+
+		-- Last terminal gets any remaining height to avoid a gap at the bottom.
+		local height = each_height
+		if index == total then
+			height = usable_height - (each_height * (total - 1))
+		end
+
+		-- Border configuration: vertical borders on left/right, horizontal border at bottom.
+		local border
+		if index < total then
+			if position == "left" then
+				border = { "", "", chars.vertical, chars.vertical, chars.vertical_right, chars.horizontal, "", "" }
+			else
+				border = { "", "", "", "", chars.horizontal, chars.horizontal, chars.vertical_left, chars.vertical }
+			end
+		else
+			-- Last terminal: no bottom border.
+			if position == "left" then
+				border = { "", "", chars.vertical, chars.vertical, " ", " ", "", "" }
+			else
+				border = { "", "", "", "", " ", " ", " ", chars.vertical }
+			end
+		end
+
+		return {
+			anchor = position == "left" and "NW" or "NE",
+			border = border,
+			col = position == "left" and 0 or editor_width,
+			height = height,
+			relative = "editor",
+			row = row,
+			style = "minimal",
+			width = width,
+			zindex = 50,
+		}
 	end
 
-	-- Border configuration based on position.
-	local is_left = opts.position == "left"
-	local chars = config.get_border_chars()
+	-- Horizontal stacking (top/bottom): terminals stack from left to right.
+	local height = math.floor(editor_height * opts.height)
+
+	-- Every terminal has a right border column: separators between stacked terminals,
+	-- and an invisible (space) column for the last terminal.
+	local border_cols = total
+	local usable_width = editor_width - border_cols
+	local each_width = math.floor(usable_width / total)
+
+	-- Accumulate column position, accounting for borders of previous terminals.
+	local col = (index - 1) * (each_width + 1)
+
+	-- Last terminal gets any remaining width to avoid a gap at the right edge.
+	local width = each_width
+	if index == total then
+		width = usable_width - (each_width * (total - 1))
+	end
+
+	-- Border configuration: horizontal borders on top/bottom, vertical border at right.
 	local border
 	if index < total then
-		if is_left then
-			border = { "", "", chars.vertical, chars.vertical, chars.vertical_right, chars.horizontal, "", "" }
+		if position == "top" then
+			border = { "", "", chars.vertical, chars.vertical, chars.horizontal, chars.horizontal, chars.horizontal, "" }
 		else
-			border = { "", "", "", "", chars.horizontal, chars.horizontal, chars.vertical_left, chars.vertical }
+			border = { chars.horizontal, chars.horizontal, chars.horizontal, chars.vertical, "", "", "", "" }
 		end
 	else
-		-- Last terminal: no bottom border.
-		if is_left then
-			border = { "", "", chars.vertical, chars.vertical, " ", " ", "", "" }
+		-- Last terminal: no right border.
+		if position == "top" then
+			border = { "", "", "", "", chars.horizontal, chars.horizontal, chars.horizontal, "" }
 		else
-			border = { "", "", "", "", " ", " ", " ", chars.vertical }
+			border = { chars.horizontal, chars.horizontal, chars.horizontal, "", "", "", "", "" }
 		end
 	end
 
 	return {
-		anchor = is_left and "NW" or "NE",
+		anchor = position == "top" and "NW" or "SW",
 		border = border,
-		col = is_left and 0 or editor_width,
+		col = col,
 		height = height,
 		relative = "editor",
-		row = row,
+		row = position == "top" and 0 or editor_height,
 		style = "minimal",
 		width = width,
 		zindex = 50,
