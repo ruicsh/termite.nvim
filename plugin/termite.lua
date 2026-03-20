@@ -66,6 +66,7 @@ local SUBCOMMANDS = {
 	next = "focus_next",
 	prev = "focus_prev",
 	editor = "focus_editor",
+	terminals = "focus_terminals",
 }
 
 vim.api.nvim_create_user_command("Termite", function(opts)

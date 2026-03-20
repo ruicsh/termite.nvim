@@ -8,6 +8,7 @@
 --   require("termite").focus_next()         Focus next terminal in stack.
 --   require("termite").focus_prev()         Focus previous terminal in stack.
 --   require("termite").focus_editor()       Focus editor window.
+--   require("termite").focus_terminals()    Focus the terminal stack.
 --   require("termite").close_current()      Close the focused terminal.
 --   require("termite").toggle_maximize()    Maximize/restore focused terminal.
 
@@ -191,6 +192,7 @@ end
 -- Public API {{{
 
 -- Toggle all terminals (show/hide). First call creates one.
+-- Smart behavior: if terminals visible but focus is on editor, focus terminals instead of hiding.
 M.toggle = function()
 	save_editor_window()
 
@@ -205,7 +207,15 @@ M.toggle = function()
 		end
 
 		if any_visible then
-			hide_all()
+			-- Check if focus is currently on a terminal
+			local focused_idx = get_focused_index()
+			if focused_idx then
+				-- Focus is on a terminal, hide them
+				hide_all()
+			else
+				-- Focus is on editor, focus terminals instead
+				M.focus_terminals()
+			end
 		else
 			show_all()
 		end
@@ -300,6 +310,22 @@ M.focus_editor = function()
 			vim.api.nvim_set_current_win(win)
 			update_border_highlights()
 			return
+		end
+	end
+end
+
+-- Focus the terminal stack (focuses the last terminal).
+M.focus_terminals = function()
+	if not state.visible or #state.terminals == 0 then
+		return
+	end
+
+	local term = state.terminals[#state.terminals]
+	if term and term.win and vim.api.nvim_win_is_valid(term.win) then
+		vim.api.nvim_set_current_win(term.win)
+		update_border_highlights()
+		if config.values.start_insert then
+			vim.cmd.startinsert()
 		end
 	end
 end

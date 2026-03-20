@@ -26,7 +26,7 @@ Features:
 - Create multiple terminals that automatically resize and reflow
 - Navigate between terminals (next/previous)
 - Maximize/restore individual terminals to full height/width
-- Focus editor while keeping terminals visible
+- Focus editor while keeping terminals visible, and focus back with a single key
 - Custom shell support
 - Full keymap customization
 - Border highlighting for single, active, and inactive terminals (outer edge only)
@@ -203,8 +203,23 @@ To disable a keymap, set it to false:
 Default keymaps:
 
   Terminal Mode:
-    <C-\\>      Toggle all terminals
+    <C-\>      Toggle all terminals (smart: focus back)
     <C-t>       Create new terminal
+    <C-j>       Focus next terminal
+    <C-k>       Focus previous terminal
+    <C-e>       Focus editor window
+    <C-[>       Exit to normal mode
+    <C-z>       Maximize/restore terminal
+
+  Normal Mode (within terminal):
+    q           Close current terminal
+
+  Normal Mode (global):
+    <C-\>      Toggle all terminals (smart: focus back)
+    <C-t>       Create new terminal
+
+  Smart toggle: When terminals are visible and you press <C-\> while focus is
+  on the editor, it focuses the terminals instead of hiding them.
     <C-j>       Focus next terminal
     <C-k>       Focus previous terminal
     <C-e>       Focus editor window
@@ -226,19 +241,22 @@ Default keymaps:
 Run termite subcommands. Without a subcommand, defaults to "toggle".
 
 Subcommands:
-  toggle      Toggle all terminals (show/hide)
+  toggle      Toggle all terminals (smart: focuses terminals if focus is on editor)
   create      Create a new terminal
   maximize    Maximize/restore the focused terminal
   close       Close the focused terminal
   next        Focus the next terminal in the stack
   prev        Focus the previous terminal in the stack
   editor      Focus the editor window
+  terminals   Focus the terminal stack (last terminal)
 
 ================================================================================
 7. API                                                      *termite-api*
 
 termite.toggle()                                        *termite-toggle()*
   Toggle all terminals (show/hide). If no terminals exist, creates one.
+  Smart behavior: if terminals are visible and focus is on editor, focuses
+  terminals instead of hiding.
 
 termite.create()                                        *termite-create()*
   Create a new terminal and add it to the stack.
@@ -251,6 +269,9 @@ termite.focus_prev()                                    *termite-focus_prev()*
 
 termite.focus_editor()                                  *termite-focus_editor()*
   Focus the editor window while keeping terminals visible.
+
+termite.focus_terminals()                               *termite-focus_terminals()*
+  Focus the terminal stack (last terminal). Terminals must be visible.
 
 termite.close_current()                                 *termite-close_current()*
   Close the currently focused terminal and remove it from the stack.

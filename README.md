@@ -12,7 +12,7 @@ Stacking float terminal manager for Neovim.
 - **Create multiple terminals** that automatically resize and reflow
 - **Navigate between terminals** with next/previous keys
 - **Maximize/restore** individual terminals to full height/width
-- **Focus editor** while keeping terminals visible
+- **Focus editor** while keeping terminals visible, and focus back with a single key
 - **Custom shell support** per terminal or global default
 - **Full keymap customization**
 - **Border highlighting** for active and inactive terminals (customizable)
@@ -159,23 +159,25 @@ require("termite").setup({
 
 Default keymaps:
 
-| Mode     | Key     | Action                    |
-| -------- | ------- | ------------------------- |
-| Terminal | `<C-\>` | Toggle all terminals      |
-| Terminal | `<C-t>` | Create new terminal       |
-| Terminal | `<C-n>` | Focus next terminal       |
-| Terminal | `<C-p>` | Focus previous terminal   |
-| Terminal | `<C-e>` | Focus editor window       |
-| Terminal | `<C-[>` | Exit to normal mode       |
-| Terminal | `<C-z>` | Maximize/restore terminal |
-| Normal   | `q`     | Close current terminal    |
+| Mode     | Key     | Action                                |
+| -------- | ------- | ------------------------------------- |
+| Terminal | `<C-\>` | Toggle all terminals (smart: focus back) |
+| Terminal | `<C-t>` | Create new terminal                   |
+| Terminal | `<C-n>` | Focus next terminal                   |
+| Terminal | `<C-p>` | Focus previous terminal               |
+| Terminal | `<C-e>` | Focus editor window                   |
+| Terminal | `<C-[>` | Exit to normal mode                   |
+| Terminal | `<C-z>` | Maximize/restore terminal             |
+| Normal   | `q`     | Close current terminal                |
 
 Additionally, `toggle` and `create` keymaps are available in normal mode globally:
 
-| Mode   | Key     | Action               |
-| ------ | ------- | -------------------- |
-| Normal | `<C-\>` | Toggle all terminals |
-| Normal | `<C-t>` | Create new terminal  |
+| Mode   | Key     | Action                                |
+| ------ | ------- | ------------------------------------- |
+| Normal | `<C-\>` | Toggle all terminals (smart: focus back) |
+| Normal | `<C-t>` | Create new terminal                   |
+
+**Smart toggle behavior:** When terminals are visible and you press `<C-\>` while focus is on the editor, it focuses the terminals instead of hiding them. This lets you switch between editor and terminals with the same key.
 
 ## Commands
 
@@ -183,13 +185,14 @@ The `:Termite` command accepts subcommands:
 
 ```vim
 :Termite              " Toggle all terminals (default)
-:Termite toggle       " Toggle all terminals
+:Termite toggle       " Toggle all terminals (smart: focuses terminals if in editor)
 :Termite create       " Create new terminal
 :Termite maximize     " Maximize/restore current terminal
 :Termite close        " Close current terminal
 :Termite next         " Focus next terminal
 :Termite prev         " Focus previous terminal
 :Termite editor       " Focus editor window
+:Termite terminals    " Focus the terminal stack
 ```
 
 ## API
@@ -202,6 +205,8 @@ termite.setup(opts)              -- Configure the plugin
 
 -- Terminal management
 termite.toggle()                 -- Toggle all terminals (show/hide)
+-- Smart toggle: if terminals visible and focus is on editor, focuses terminals
+-- otherwise toggles visibility
 termite.create()                 -- Create a new terminal
 termite.close_current()          -- Close the focused terminal
 
@@ -209,6 +214,7 @@ termite.close_current()          -- Close the focused terminal
 termite.focus_next()             -- Focus next terminal in stack
 termite.focus_prev()             -- Focus previous terminal in stack
 termite.focus_editor()           -- Focus editor window
+termite.focus_terminals()        -- Focus the terminal stack (last terminal)
 
 -- Window state
 termite.toggle_maximize()        -- Maximize/restore focused terminal
