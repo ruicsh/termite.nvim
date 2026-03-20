@@ -61,6 +61,17 @@ local function save_editor_window()
 	end
 end
 
+-- Update border highlights for all terminals based on focus.
+local function update_border_highlights()
+	local current_win = vim.api.nvim_get_current_win()
+	for _, term in ipairs(state.terminals) do
+		if term.win and vim.api.nvim_win_is_valid(term.win) then
+			local is_active = term.win == current_win
+			layout.update_border_highlight(term, is_active)
+		end
+	end
+end
+
 -- Restore all hidden siblings when exiting maximized state. Used by multiple actions.
 local function restore_from_maximized()
 	state.maximized_idx = nil
@@ -71,6 +82,7 @@ local function restore_from_maximized()
 			terminal.show(term)
 		end
 	end
+	update_border_highlights()
 end
 
 -- Focus the saved editor window.
@@ -117,6 +129,7 @@ M.remove_terminal = function(term)
 		if focus_term and focus_term.win and vim.api.nvim_win_is_valid(focus_term.win) then
 			vim.api.nvim_set_current_win(focus_term.win)
 		end
+		update_border_highlights()
 	end
 end
 
@@ -139,6 +152,7 @@ local function show_all()
 		local last = state.terminals[#state.terminals]
 		if last.win and vim.api.nvim_win_is_valid(last.win) then
 			vim.api.nvim_set_current_win(last.win)
+			update_border_highlights()
 			if config.values.start_insert then
 				vim.cmd.startinsert()
 			end
@@ -188,6 +202,7 @@ M.toggle = function()
 		show_all()
 	else
 		terminal.create()
+		update_border_highlights()
 	end
 end
 
@@ -198,7 +213,9 @@ M.create = function()
 		restore_from_maximized()
 	end
 
-	return terminal.create()
+	local term = terminal.create()
+	update_border_highlights()
+	return term
 end
 
 -- Focus the next terminal in the stack (wraps around).
@@ -216,6 +233,7 @@ M.focus_next = function()
 	local term = state.terminals[next_idx]
 	if term and term.win and vim.api.nvim_win_is_valid(term.win) then
 		vim.api.nvim_set_current_win(term.win)
+		update_border_highlights()
 		if config.values.start_insert then
 			vim.cmd.startinsert()
 		end
@@ -237,6 +255,7 @@ M.focus_prev = function()
 	local term = state.terminals[prev_idx]
 	if term and term.win and vim.api.nvim_win_is_valid(term.win) then
 		vim.api.nvim_set_current_win(term.win)
+		update_border_highlights()
 		if config.values.start_insert then
 			vim.cmd.startinsert()
 		end
@@ -247,6 +266,7 @@ end
 M.focus_editor = function()
 	if state.last_editor_winnr and vim.api.nvim_win_is_valid(state.last_editor_winnr) then
 		vim.api.nvim_set_current_win(state.last_editor_winnr)
+		update_border_highlights()
 		return
 	end
 
@@ -257,6 +277,7 @@ M.focus_editor = function()
 		local win_config = vim.api.nvim_win_get_config(win)
 		if bt ~= "terminal" and win_config.relative == "" then
 			vim.api.nvim_set_current_win(win)
+			update_border_highlights()
 			return
 		end
 	end
@@ -304,6 +325,7 @@ M.close_current = function()
 				vim.api.nvim_set_current_win(next_term.win)
 			end
 		end
+		update_border_highlights()
 	end
 end
 
@@ -326,6 +348,7 @@ M.toggle_maximize = function()
 				vim.cmd.startinsert()
 			end
 		end
+		update_border_highlights()
 	else
 		-- Maximize: hide all siblings, expand focused terminal to full height.
 		state.maximized_idx = idx
@@ -343,10 +366,9 @@ M.toggle_maximize = function()
 				vim.cmd.startinsert()
 			end
 		end
+		update_border_highlights()
 	end
 end
-
--- }}}
 
 return M
 

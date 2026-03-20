@@ -10,6 +10,7 @@ CONTENTS                                                  *termite-contents*
 5. Keymaps ......................... |termite-keymaps|
 6. Commands ........................ |termite-commands|
 7. API ............................. |termite-api|
+8. Highlights ...................... |termite-highlights|
 
 ================================================================================
 1. INTRODUCTION                                      *termite-introduction*
@@ -28,6 +29,7 @@ Features:
 - Focus editor while keeping terminals visible
 - Custom shell support
 - Full keymap customization
+- Border highlighting for active/inactive terminals (outer edge only)
 
 ================================================================================
 2. REQUIREMENTS                                      *termite-requirements*
@@ -135,6 +137,23 @@ wo (table)
   Window options applied to terminal windows.
   Default: { signcolumn = "yes:1" }
 
+*termite-config-highlights*
+highlights (table)
+  Highlight groups for terminal borders.
+  - border_active: Highlight for the active terminal's outer edge (straight line)
+  - border_inactive: Highlight for inactive terminals and corner characters
+
+  The outer edge is the border facing the editor:
+    - position="right": left edge (index 8)
+    - position="left": right edge (index 4)
+    - position="top": bottom edge (index 6)
+    - position="bottom": top edge (index 2)
+
+  Default: {
+    border_active = "TermiteBorder",
+    border_inactive = "TermiteBorderNC",
+  }
+
 ================================================================================
 5. KEYMAPS                                              *termite-keymaps*
 
@@ -227,6 +246,34 @@ termite.toggle_maximize()                               *termite-toggle_maximize
 
 termite.setup({config})
   Configure the plugin. See |termite-configuration|.
+
+================================================================================
+8. HIGHLIGHTS                                          *termite-highlights*
+
+termite.nvim uses two highlight groups for border colors:
+
+TermiteBorder                                            *hl-TermiteBorder*
+  Applied to the straight-line outer edge of the active (focused) terminal.
+  Corners are not highlighted - only the straight line segment facing the
+  editor.
+  Default: links to |hl-FloatBorder|
+
+TermiteBorderNC                                          *hl-TermiteBorderNC*
+  Applied to inactive terminal borders and all corner characters.
+  Default: links to |hl-Comment|
+
+To customize in your colorscheme: >lua
+  vim.api.nvim_set_hl(0, "TermiteBorder", { fg = "#ff6b6b" })
+  vim.api.nvim_set_hl(0, "TermiteBorderNC", { fg = "#4a4a4a" })
+<
+Or in setup: >lua
+  require("termite").setup({
+    highlights = {
+      border_active = "MyActiveBorder",
+      border_inactive = "MyInactiveBorder",
+    },
+  })
+<
 
 ================================================================================
 vim:tw=78:ts=8:ft=help:norl:

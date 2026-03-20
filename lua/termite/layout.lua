@@ -6,6 +6,48 @@ local state = require("termite.state")
 
 local M = {}
 
+-- Build a border array with highlight groups.
+-- border: the base border array (array of chars)
+-- position: "left", "right", "top", or "bottom"
+-- is_active: whether this is the active terminal
+-- Returns a border array where each element is either a char or {char, highlight}
+M.build_highlighted_border = function(border, position, is_active)
+	local hl_active = config.values.highlights.border_active
+	local hl_inactive = config.values.highlights.border_inactive
+
+	local result = {}
+
+	-- Determine which border indices face the editor (outer edge)
+	-- Only highlight straight lines, not corners
+	local outer_indices = {}
+	if position == "left" then
+		-- Right edge only (not corners)
+		outer_indices = { [4] = true }
+	elseif position == "right" then
+		-- Left edge only (not corners)
+		outer_indices = { [8] = true }
+	elseif position == "top" then
+		-- Bottom edge only (not corners)
+		outer_indices = { [6] = true }
+	elseif position == "bottom" then
+		-- Top edge only (not corners)
+		outer_indices = { [2] = true }
+	end
+
+	-- Convert all border elements to tuples with appropriate highlights
+	for i, char in ipairs(border) do
+		if char and char ~= "" then
+			local is_outer = outer_indices[i]
+			local hl = is_outer and (is_active and hl_active or hl_inactive) or hl_inactive
+			result[i] = { char, hl }
+		else
+			result[i] = char
+		end
+	end
+
+	return result
+end
+
 -- Compute the floating window config for a terminal at the given index in a stack of
 -- `total` terminals.
 M.get_win_config = function(index, total)
@@ -146,6 +188,72 @@ M.apply_config = function(term, win_config)
 	end
 end
 
+-- Update border highlights for a specific terminal based on active state.
+-- Updates the window config border with highlight groups and applies it.
+M.update_border_highlight = function(term, is_active)
+	if not term.win or not vim.api.nvim_win_is_valid(term.win) then
+		return
+	end
+
+	local opts = config.values
+	local position = opts.position
+	local chars = config.get_border_chars()
+
+	-- Rebuild the base border (same logic as get_win_config)
+	local border
+	local total = #state.terminals
+	local index = nil
+	for i, t in ipairs(state.terminals) do
+		if t == term then
+			index = i
+			break
+		end
+	end
+
+	if not index then
+		return
+	end
+
+	-- Build the base border array
+	if position == "left" or position == "right" then
+		if index < total then
+			if position == "left" then
+				border = { "", "", chars.vertical, chars.vertical, chars.vertical_right, chars.horizontal, "", "" }
+			else
+				border = { "", "", "", "", chars.horizontal, chars.horizontal, chars.vertical_left, chars.vertical }
+			end
+		else
+			if position == "left" then
+				border = { "", "", chars.vertical, chars.vertical, " ", " ", "", "" }
+			else
+				border = { "", "", "", "", " ", " ", " ", chars.vertical }
+			end
+		end
+	else
+		if index < total then
+			if position == "top" then
+				border = { "", "", chars.vertical, chars.vertical, chars.horizontal_up, chars.horizontal, chars.horizontal, "" }
+			else
+				border = { chars.horizontal, chars.horizontal, chars.horizontal_down, chars.vertical, "", "", "", "" }
+			end
+		else
+			if position == "top" then
+				border = { "", "", "", "", chars.horizontal, chars.horizontal, chars.horizontal, "" }
+			else
+				border = { chars.horizontal, chars.horizontal, chars.horizontal, "", "", "", "", "" }
+			end
+		end
+	end
+
+	-- Apply highlights to outer edge
+	local highlighted_border = M.build_highlighted_border(border, position, is_active)
+
+	-- Apply the new border config
+	vim.api.nvim_win_set_config(term.win, {
+		border = highlighted_border,
+	})
+end
+
 -- Reposition and resize all visible terminals in the stack.
 M.reflow = function()
 	local total = #state.terminals
@@ -162,3 +270,5 @@ M.reflow = function()
 end
 
 return M
+
+-- vim: foldmethod=marker:foldmarker={{{,}}}:foldlevel=0

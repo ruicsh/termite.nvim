@@ -16,6 +16,7 @@ Stacking float terminal manager for Neovim.
 - **Focus editor** while keeping terminals visible
 - **Custom shell support** per terminal or global default
 - **Full keymap customization**
+- **Border highlighting** for active and inactive terminals (customizable)
 
 ## Requirements
 
@@ -56,6 +57,59 @@ require("termite").setup({
 
   wo = {                 -- Window options applied to terminal windows
     signcolumn = "yes:1",
+  },
+
+  highlights = {
+    border_active = "TermiteBorder",     -- Highlight group for active terminal border
+    border_inactive = "TermiteBorderNC", -- Highlight group for inactive terminal borders
+  },
+})
+```
+
+## Highlights
+
+termite.nvim uses two highlight groups for terminal window borders:
+
+- `TermiteBorder` - Applied to the active (focused) terminal's **outer edge** (facing the editor)
+- `TermiteBorderNC` - Applied to inactive (non-focused) terminal borders
+
+The outer edge is:
+- **Left border** when `position = "right"`
+- **Right border** when `position = "left"`
+- **Top border** when `position = "bottom"`
+- **Bottom border** when `position = "top"`
+
+This means only the border facing the editor is highlighted, while the separators between stacked terminals remain dimmed.
+
+### Defaults
+
+By default, the highlight groups link to:
+- `TermiteBorder` → `FloatBorder` (active terminal outer edge)
+- `TermiteBorderNC` → `Comment` (inactive terminal outer edges)
+
+These defaults use `default = true`, so they can be overridden by colorschemes or user configuration.
+
+### Customizing in Colorscheme
+
+Define the highlight groups in your colorscheme or init.lua:
+
+```lua
+-- Customize active terminal border
+vim.api.nvim_set_hl(0, "TermiteBorder", { fg = "#ff6b6b", bg = "NONE", bold = true })
+
+-- Customize inactive terminal borders
+vim.api.nvim_set_hl(0, "TermiteBorderNC", { fg = "#4a4a4a", bg = "NONE" })
+```
+
+### Customizing in Setup
+
+Alternatively, specify custom highlight groups in the setup:
+
+```lua
+require("termite").setup({
+  highlights = {
+    border_active = "MyCustomActive",
+    border_inactive = "MyCustomInactive",
   },
 })
 ```
@@ -129,6 +183,19 @@ termite.focus_editor()           -- Focus editor window
 
 -- Window state
 termite.toggle_maximize()        -- Maximize/restore focused terminal
+```
+
+## Highlight API
+
+```lua
+local highlights = require("termite.highlights")
+
+-- Highlight groups
+highlights.BORDER_ACTIVE         -- "TermiteBorder"
+highlights.BORDER_INACTIVE       -- "TermiteBorderNC"
+
+-- Re-initialize highlight groups (useful after colorscheme change)
+highlights.setup()
 ```
 
 ## License

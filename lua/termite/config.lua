@@ -25,6 +25,10 @@ local DEFAULTS = {
 	wo = { -- Window options applied to terminal windows.
 		signcolumn = "yes:1",
 	},
+	highlights = {
+		border_active = "TermiteBorder", -- Highlight for active terminal border.
+		border_inactive = "TermiteBorderNC", -- Highlight for inactive terminal borders.
+	},
 }
 
 M.values = vim.deepcopy(DEFAULTS)

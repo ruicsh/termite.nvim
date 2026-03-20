@@ -1,7 +1,11 @@
 -- termite.nvim
 -- Autoloaded: autocmds and user commands.
 
+local highlights = require("termite.highlights")
 local group = vim.api.nvim_create_augroup("termite/plugin", { clear = true })
+
+-- Set up default highlight groups.
+highlights.setup()
 
 -- Reflow or reposition terminals when the editor is resized.
 vim.api.nvim_create_autocmd("VimResized", {
@@ -22,6 +26,37 @@ vim.api.nvim_create_autocmd("VimResized", {
 			end
 		else
 			layout.reflow()
+		end
+	end,
+})
+
+-- Update border highlights when entering a terminal window.
+vim.api.nvim_create_autocmd("WinEnter", {
+	group = group,
+	callback = function()
+		local state = require("termite.state")
+		local layout = require("termite.layout")
+		if not state.visible or #state.terminals == 0 then
+			return
+		end
+
+		local current_win = vim.api.nvim_get_current_win()
+		local is_termite_terminal = false
+		for _, term in ipairs(state.terminals) do
+			if term.win == current_win then
+				is_termite_terminal = true
+				break
+			end
+		end
+
+		if is_termite_terminal then
+			local current_win_id = vim.api.nvim_get_current_win()
+			for _, term in ipairs(state.terminals) do
+				if term.win and vim.api.nvim_win_is_valid(term.win) then
+					local is_active = term.win == current_win_id
+					layout.update_border_highlight(term, is_active)
+				end
+			end
 		end
 	end,
 })
