@@ -139,8 +139,11 @@ wo (table)
 
 *termite-config-highlights*
 highlights (table)
-  Highlight groups for terminal borders.
-  - border_active: Highlight for the active terminal's outer edge (straight line)
+  Highlight configuration for terminal borders.
+  Each value can be either a string (highlight group name) or a table
+  (direct highlight definition with fg, bg, etc.).
+
+  - border_active: Highlight for the active terminal's outer edge
   - border_inactive: Highlight for inactive terminals and corner characters
 
   The outer edge is the border facing the editor:
@@ -266,11 +269,19 @@ To customize in your colorscheme: >lua
   vim.api.nvim_set_hl(0, "TermiteBorder", { fg = "#ff6b6b" })
   vim.api.nvim_set_hl(0, "TermiteBorderNC", { fg = "#4a4a4a" })
 <
-Or in setup: >lua
+Or in setup with highlight group names: >lua
   require("termite").setup({
     highlights = {
       border_active = "MyActiveBorder",
       border_inactive = "MyInactiveBorder",
+    },
+  })
+<
+Or define colors directly in setup: >lua
+  require("termite").setup({
+    highlights = {
+      border_active = { fg = "#00ff00", bg = "NONE" },
+      border_inactive = { fg = "#ff0000", bg = "NONE" },
     },
   })
 <

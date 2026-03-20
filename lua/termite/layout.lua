@@ -2,6 +2,7 @@
 -- Window geometry: positioning, sizing, and reflow.
 
 local config = require("termite.config")
+local highlights = require("termite.highlights")
 local state = require("termite.state")
 
 local M = {}
@@ -12,8 +13,8 @@ local M = {}
 -- is_active: whether this is the active terminal
 -- Returns a border array where each element is either a char or {char, highlight}
 M.build_highlighted_border = function(border, position, is_active)
-	local hl_active = config.values.highlights.border_active
-	local hl_inactive = config.values.highlights.border_inactive
+	local hl_active = highlights.resolve_hl(config.values.highlights.border_active, highlights.BORDER_ACTIVE)
+	local hl_inactive = highlights.resolve_hl(config.values.highlights.border_inactive, highlights.BORDER_INACTIVE)
 
 	local result = {}
 

@@ -26,8 +26,8 @@ local DEFAULTS = {
 		signcolumn = "yes:1",
 	},
 	highlights = {
-		border_active = "TermiteBorder", -- Highlight for active terminal border.
-		border_inactive = "TermiteBorderNC", -- Highlight for inactive terminal borders.
+		border_active = "TermiteBorder", -- Highlight for active terminal border (string = hl group, table = direct definition).
+		border_inactive = "TermiteBorderNC", -- Highlight for inactive terminal borders (string = hl group, table = direct definition).
 	},
 }
 

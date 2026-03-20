@@ -1,11 +1,7 @@
 -- termite.nvim
 -- Autoloaded: autocmds and user commands.
 
-local highlights = require("termite.highlights")
 local group = vim.api.nvim_create_augroup("termite/plugin", { clear = true })
-
--- Set up default highlight groups.
-highlights.setup()
 
 -- Reflow or reposition terminals when the editor is resized.
 vim.api.nvim_create_autocmd("VimResized", {

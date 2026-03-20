@@ -60,8 +60,8 @@ require("termite").setup({
   },
 
   highlights = {
-    border_active = "TermiteBorder",     -- Highlight group for active terminal border
-    border_inactive = "TermiteBorderNC", -- Highlight group for inactive terminal borders
+    border_active = "TermiteBorder",     -- Highlight for active terminal border (string = hl group, table = direct definition)
+    border_inactive = "TermiteBorderNC", -- Highlight for inactive terminal borders (string = hl group, table = direct definition)
   },
 })
 ```
@@ -103,13 +103,26 @@ vim.api.nvim_set_hl(0, "TermiteBorderNC", { fg = "#4a4a4a", bg = "NONE" })
 
 ### Customizing in Setup
 
-Alternatively, specify custom highlight groups in the setup:
+You can specify highlights in two ways:
+
+**1. Use custom highlight group names:**
 
 ```lua
 require("termite").setup({
   highlights = {
     border_active = "MyCustomActive",
     border_inactive = "MyCustomInactive",
+  },
+})
+```
+
+**2. Define colors directly:**
+
+```lua
+require("termite").setup({
+  highlights = {
+    border_active = { fg = "#00ff00", bg = "NONE" },
+    border_inactive = { fg = "#ff0000", bg = "NONE" },
   },
 })
 ```

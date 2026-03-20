@@ -12,6 +12,7 @@
 --   require("termite").toggle_maximize()    Maximize/restore focused terminal.
 
 local config = require("termite.config")
+local highlights = require("termite.highlights")
 local layout = require("termite.layout")
 local state = require("termite.state")
 local terminal = require("termite.terminal")
@@ -22,6 +23,9 @@ local M = {}
 
 M.setup = function(opts)
 	config.setup(opts)
+
+	-- Set up highlights AFTER config is merged, so user values are available.
+	highlights.setup()
 
 	local km = config.values.keymaps
 	if km.toggle then
