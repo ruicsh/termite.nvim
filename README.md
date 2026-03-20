@@ -2,8 +2,7 @@
 
 Stacking float terminal manager for Neovim.
 
-<!-- ## Demo -->
-<!-- ![termite.nvim demo](https://user-images.githubusercontent.com/YOUR_USERNAME/termite.nvim/demo.gif) -->
+<img src="assets/screenshot.gif" />
 
 ## Features
 
