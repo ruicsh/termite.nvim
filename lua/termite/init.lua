@@ -224,6 +224,16 @@ M.create = function()
 		restore_from_maximized()
 	end
 
+	-- Show existing hidden terminals before creating a new one.
+	if #state.terminals > 0 and not state.visible then
+		state.visible = true
+		for _, term in ipairs(state.terminals) do
+			if not term.win or not vim.api.nvim_win_is_valid(term.win) then
+				terminal.show(term)
+			end
+		end
+	end
+
 	local term = terminal.create()
 	update_border_highlights()
 	return term
