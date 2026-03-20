@@ -159,11 +159,14 @@ local function show_all()
 	state.visible = true
 	layout.reflow()
 
-	-- Focus the last terminal in the stack.
+	-- Focus the most recently focused terminal, or fall back to the last in the stack.
 	if #state.terminals > 0 then
-		local last = state.terminals[#state.terminals]
-		if last.win and vim.api.nvim_win_is_valid(last.win) then
-			vim.api.nvim_set_current_win(last.win)
+		local focus_idx = state.last_focused_idx or #state.terminals
+		focus_idx = math.min(focus_idx, #state.terminals)
+		local term = state.terminals[focus_idx]
+		if term and term.win and vim.api.nvim_win_is_valid(term.win) then
+			vim.api.nvim_set_current_win(term.win)
+			state.last_focused_idx = focus_idx
 			update_border_highlights()
 			if config.values.start_insert then
 				vim.cmd.startinsert()
@@ -223,6 +226,7 @@ M.toggle = function()
 		show_all()
 	else
 		terminal.create()
+		state.last_focused_idx = #state.terminals
 		update_border_highlights()
 	end
 end
@@ -245,6 +249,7 @@ M.create = function()
 	end
 
 	local term = terminal.create()
+	state.last_focused_idx = #state.terminals
 	update_border_highlights()
 	return term
 end
@@ -264,6 +269,7 @@ M.focus_next = function()
 	local term = state.terminals[next_idx]
 	if term and term.win and vim.api.nvim_win_is_valid(term.win) then
 		vim.api.nvim_set_current_win(term.win)
+		state.last_focused_idx = next_idx
 		update_border_highlights()
 		if config.values.start_insert then
 			vim.cmd.startinsert()
@@ -286,6 +292,7 @@ M.focus_prev = function()
 	local term = state.terminals[prev_idx]
 	if term and term.win and vim.api.nvim_win_is_valid(term.win) then
 		vim.api.nvim_set_current_win(term.win)
+		state.last_focused_idx = prev_idx
 		update_border_highlights()
 		if config.values.start_insert then
 			vim.cmd.startinsert()
@@ -314,13 +321,15 @@ M.focus_editor = function()
 	end
 end
 
--- Focus the terminal stack (focuses the last terminal).
+-- Focus the terminal stack (focuses the last focused terminal, or the last in the stack).
 M.focus_terminals = function()
 	if not state.visible or #state.terminals == 0 then
 		return
 	end
 
-	local term = state.terminals[#state.terminals]
+	local focus_idx = state.last_focused_idx or #state.terminals
+	focus_idx = math.min(focus_idx, #state.terminals)
+	local term = state.terminals[focus_idx]
 	if term and term.win and vim.api.nvim_win_is_valid(term.win) then
 		vim.api.nvim_set_current_win(term.win)
 		update_border_highlights()
