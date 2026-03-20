@@ -7,6 +7,29 @@ local layout = require("termite.layout")
 
 local M = {}
 
+-- Format cwd for display, shortening home directory.
+local function format_cwd(cwd)
+	local home = vim.fn.expand("~")
+	if vim.startswith(cwd, home) then
+		return "~" .. cwd:sub(#home + 1)
+	end
+	return cwd
+end
+
+-- Set the winbar for a terminal window using b:term_title.
+local function set_winbar(term)
+	if not config.values.winbar then
+		return
+	end
+	if not term.win or not vim.api.nvim_win_is_valid(term.win) then
+		return
+	end
+
+	local cwd = term.cwd and format_cwd(term.cwd) or "~"
+	local hl = config.values.highlights.winbar
+	vim.wo[term.win].winbar = "%#" .. hl .. "#  %{get(b:, 'term_title', '" .. cwd .. "')}"
+end
+
 -- Set up buffer-local keymaps for a terminal buffer.
 M.setup_keymaps = function(bufnr)
 	local opts = config.values
@@ -107,6 +130,7 @@ M.create = function()
 		win = win,
 		config = win_config,
 		count = count,
+		cwd = vim.fn.getcwd(),
 	}
 
 	table.insert(state.terminals, term)
@@ -124,6 +148,11 @@ M.create = function()
 			require("termite").remove_terminal(term)
 		end,
 	})
+
+	-- Set up winbar.
+	if config.values.winbar then
+		set_winbar(term)
+	end
 
 	-- Enter insert mode in the new terminal.
 	if config.values.start_insert then
@@ -161,6 +190,11 @@ M.show = function(term)
 	-- Apply window options.
 	for opt, val in pairs(config.values.wo) do
 		vim.wo[win][opt] = val
+	end
+
+	-- Set up winbar.
+	if config.values.winbar then
+		set_winbar(term)
 	end
 end
 

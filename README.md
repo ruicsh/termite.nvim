@@ -17,6 +17,7 @@ Stacking float terminal manager for Neovim.
 - **Custom shell support** per terminal or global default
 - **Full keymap customization**
 - **Border highlighting** for active and inactive terminals (customizable)
+- **Winbar** showing running process or cwd (customizable)
 
 ## Requirements
 
@@ -43,6 +44,7 @@ require("termite").setup({
   border = "light",      -- Border style: "light", "heavy", "double", "double-dash", "triple-dash", "quadruple-dash"
   shell = nil,           -- Shell command (nil = default $SHELL)
   start_insert = true,   -- Enter insert mode when focusing a terminal
+  winbar = true,         -- Show winbar with running process or cwd
 
   keymaps = {
     toggle = "<C-\\>",   -- Toggle all terminals (terminal mode)
@@ -63,6 +65,7 @@ require("termite").setup({
     border_active = "TermiteBorder",        -- Highlight for active terminal border (string = hl group, table = direct definition)
     border_inactive = "TermiteBorderNC",    -- Highlight for inactive terminal borders (string = hl group, table = direct definition)
     border_single = "TermiteBorderSingle",  -- Highlight for single terminal border (string = hl group, table = direct definition)
+    winbar = "TermiteWinbar",               -- Highlight for winbar
   },
 })
 ```
@@ -91,6 +94,7 @@ By default, the highlight groups link to:
 - `TermiteBorderSingle` → `FloatBorder` (single terminal)
 - `TermiteBorder` → `FloatBorder` (active terminal outer edge with 2+ terminals)
 - `TermiteBorderNC` → `Comment` (inactive terminal outer edges)
+- `TermiteWinbar` → `Normal` (winbar text)
 
 These defaults use `default = true`, so they can be overridden by colorschemes or user configuration.
 
@@ -107,6 +111,9 @@ vim.api.nvim_set_hl(0, "TermiteBorder", { fg = "#ff6b6b", bg = "NONE", bold = tr
 
 -- Customize inactive terminal borders
 vim.api.nvim_set_hl(0, "TermiteBorderNC", { fg = "#4a4a4a", bg = "NONE" })
+
+-- Customize winbar
+vim.api.nvim_set_hl(0, "TermiteWinbar", { fg = "#a0a0a0", bg = "NONE" })
 ```
 
 ### Customizing in Setup

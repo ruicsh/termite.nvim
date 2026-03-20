@@ -9,6 +9,7 @@ local M = {}
 M.BORDER_ACTIVE = "TermiteBorder"
 M.BORDER_INACTIVE = "TermiteBorderNC"
 M.BORDER_SINGLE = "TermiteBorderSingle"
+M.WINBAR = "TermiteWinbar"
 
 -- Set up default highlight groups with default = true so they can be overridden
 -- by colorschemes or user configuration.
@@ -32,10 +33,17 @@ M.setup = function()
 		default = true,
 	})
 
+	-- Winbar - defaults to Normal
+	vim.api.nvim_set_hl(0, M.WINBAR, {
+		link = "Normal",
+		default = true,
+	})
+
 	-- Apply user-provided highlight tables, if any.
 	local active = config.values.highlights.border_active
 	local inactive = config.values.highlights.border_inactive
 	local single = config.values.highlights.border_single
+	local winbar = config.values.highlights.winbar
 
 	if type(active) == "table" then
 		vim.api.nvim_set_hl(0, M.BORDER_ACTIVE, active)
@@ -45,6 +53,9 @@ M.setup = function()
 	end
 	if type(single) == "table" then
 		vim.api.nvim_set_hl(0, M.BORDER_SINGLE, single)
+	end
+	if type(winbar) == "table" then
+		vim.api.nvim_set_hl(0, M.WINBAR, winbar)
 	end
 end
 

@@ -30,6 +30,7 @@ Features:
 - Custom shell support
 - Full keymap customization
 - Border highlighting for single, active, and inactive terminals (outer edge only)
+- Winbar showing running process or cwd
 
 ================================================================================
 2. REQUIREMENTS                                      *termite-requirements*
@@ -68,6 +69,7 @@ Default configuration:
     border = "light",      -- Border style name (see |termite-config-border|)
     shell = nil,           -- Shell command (nil = $SHELL)
     start_insert = true,   -- Enter insert mode when focusing terminal
+    winbar = true,         -- Show winbar with running process or cwd
 
     keymaps = {
       toggle = "<C-\\>",   -- Toggle all terminals
@@ -126,6 +128,12 @@ start_insert (boolean)
   Whether to automatically enter insert mode when focusing a terminal.
   Default: true
 
+*termite-config-winbar*
+winbar (boolean)
+  Whether to show a winbar displaying the running process (via b:term_title)
+  or the cwd when no process is running.
+  Default: true
+
 *termite-config-keymaps*
 keymaps (table)
   Buffer-local keymaps for terminal windows. Set to false to disable.
@@ -146,6 +154,7 @@ highlights (table)
   - border_single: Highlight for the single terminal's outer edge
   - border_active: Highlight for the active terminal's outer edge (2+ terminals)
   - border_inactive: Highlight for inactive terminals and corner characters
+  - winbar: Highlight for the winbar text
 
   The outer edge is the border facing the editor:
     - position="right": left edge (index 8)
@@ -157,6 +166,7 @@ highlights (table)
     border_single = "TermiteBorderSingle",
     border_active = "TermiteBorder",
     border_inactive = "TermiteBorderNC",
+    winbar = "TermiteWinbar",
   }
 
 ================================================================================
@@ -272,10 +282,15 @@ TermiteBorderNC                                          *hl-TermiteBorderNC*
   Applied to inactive terminal borders and all corner characters.
   Default: links to |hl-Comment|
 
+TermiteWinbar                                            *hl-TermiteWinbar*
+  Applied to the winbar text showing running process or cwd.
+  Default: links to |hl-Normal|
+
 To customize in your colorscheme: >lua
   vim.api.nvim_set_hl(0, "TermiteBorderSingle", { fg = "#61afef" })
   vim.api.nvim_set_hl(0, "TermiteBorder", { fg = "#ff6b6b" })
   vim.api.nvim_set_hl(0, "TermiteBorderNC", { fg = "#4a4a4a" })
+  vim.api.nvim_set_hl(0, "TermiteWinbar", { fg = "#a0a0a0" })
 <
 Or in setup with highlight group names: >lua
   require("termite").setup({

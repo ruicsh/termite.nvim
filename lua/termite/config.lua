@@ -12,6 +12,7 @@ local DEFAULTS = {
 	border = "light", -- Border style: "light", "heavy", "double", "double-dash", "triple-dash", "quadruple-dash".
 	shell = nil, -- Shell command (nil = default shell).
 	start_insert = true, -- Enter insert mode when focusing a terminal.
+	winbar = true, -- Show winbar with cwd and running process.
 	keymaps = {
 		toggle = "<c-bslash>", -- Toggle all terminals (terminal mode).
 		create = "<c-t>", -- Create new terminal.
@@ -29,6 +30,7 @@ local DEFAULTS = {
 		border_active = "TermiteBorder", -- Highlight for active terminal border (string = hl group, table = direct definition).
 		border_inactive = "TermiteBorderNC", -- Highlight for inactive terminal borders (string = hl group, table = direct definition).
 		border_single = "TermiteBorderSingle", -- Highlight for single terminal border (string = hl group, table = direct definition).
+		winbar = "TermiteWinbar", -- Highlight for winbar.
 	},
 }
 
