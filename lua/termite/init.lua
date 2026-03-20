@@ -70,8 +70,15 @@ local function update_border_highlights()
 	local current_win = vim.api.nvim_get_current_win()
 	for _, term in ipairs(state.terminals) do
 		if term.win and vim.api.nvim_win_is_valid(term.win) then
-			local is_active = term.win == current_win
-			layout.update_border_highlight(term, is_active)
+			local hl_type
+			if #state.terminals == 1 then
+				hl_type = "single"
+			elseif term.win == current_win then
+				hl_type = "active"
+			else
+				hl_type = "inactive"
+			end
+			layout.update_border_highlight(term, hl_type)
 		end
 	end
 end

@@ -8,6 +8,7 @@ local M = {}
 -- Highlight groups for terminal window borders.
 M.BORDER_ACTIVE = "TermiteBorder"
 M.BORDER_INACTIVE = "TermiteBorderNC"
+M.BORDER_SINGLE = "TermiteBorderSingle"
 
 -- Set up default highlight groups with default = true so they can be overridden
 -- by colorschemes or user configuration.
@@ -25,15 +26,25 @@ M.setup = function()
 		default = true,
 	})
 
+	-- Single terminal border - defaults to FloatBorder
+	vim.api.nvim_set_hl(0, M.BORDER_SINGLE, {
+		link = "FloatBorder",
+		default = true,
+	})
+
 	-- Apply user-provided highlight tables, if any.
 	local active = config.values.highlights.border_active
 	local inactive = config.values.highlights.border_inactive
+	local single = config.values.highlights.border_single
 
 	if type(active) == "table" then
 		vim.api.nvim_set_hl(0, M.BORDER_ACTIVE, active)
 	end
 	if type(inactive) == "table" then
 		vim.api.nvim_set_hl(0, M.BORDER_INACTIVE, inactive)
+	end
+	if type(single) == "table" then
+		vim.api.nvim_set_hl(0, M.BORDER_SINGLE, single)
 	end
 end
 

@@ -29,7 +29,7 @@ Features:
 - Focus editor while keeping terminals visible
 - Custom shell support
 - Full keymap customization
-- Border highlighting for active/inactive terminals (outer edge only)
+- Border highlighting for single, active, and inactive terminals (outer edge only)
 
 ================================================================================
 2. REQUIREMENTS                                      *termite-requirements*
@@ -143,7 +143,8 @@ highlights (table)
   Each value can be either a string (highlight group name) or a table
   (direct highlight definition with fg, bg, etc.).
 
-  - border_active: Highlight for the active terminal's outer edge
+  - border_single: Highlight for the single terminal's outer edge
+  - border_active: Highlight for the active terminal's outer edge (2+ terminals)
   - border_inactive: Highlight for inactive terminals and corner characters
 
   The outer edge is the border facing the editor:
@@ -153,6 +154,7 @@ highlights (table)
     - position="bottom": top edge (index 2)
 
   Default: {
+    border_single = "TermiteBorderSingle",
     border_active = "TermiteBorder",
     border_inactive = "TermiteBorderNC",
   }
@@ -253,10 +255,15 @@ termite.setup({config})
 ================================================================================
 8. HIGHLIGHTS                                          *termite-highlights*
 
-termite.nvim uses two highlight groups for border colors:
+termite.nvim uses three highlight groups for border colors:
+
+TermiteBorderSingle                                      *hl-TermiteBorderSingle*
+  Applied when there is only one terminal visible.
+  Default: links to |hl-FloatBorder|
 
 TermiteBorder                                            *hl-TermiteBorder*
-  Applied to the straight-line outer edge of the active (focused) terminal.
+  Applied to the straight-line outer edge of the active (focused) terminal
+  when there are 2 or more terminals visible.
   Corners are not highlighted - only the straight line segment facing the
   editor.
   Default: links to |hl-FloatBorder|
@@ -266,12 +273,14 @@ TermiteBorderNC                                          *hl-TermiteBorderNC*
   Default: links to |hl-Comment|
 
 To customize in your colorscheme: >lua
+  vim.api.nvim_set_hl(0, "TermiteBorderSingle", { fg = "#61afef" })
   vim.api.nvim_set_hl(0, "TermiteBorder", { fg = "#ff6b6b" })
   vim.api.nvim_set_hl(0, "TermiteBorderNC", { fg = "#4a4a4a" })
 <
 Or in setup with highlight group names: >lua
   require("termite").setup({
     highlights = {
+      border_single = "MySingleBorder",
       border_active = "MyActiveBorder",
       border_inactive = "MyInactiveBorder",
     },
@@ -280,6 +289,7 @@ Or in setup with highlight group names: >lua
 Or define colors directly in setup: >lua
   require("termite").setup({
     highlights = {
+      border_single = { fg = "#61afef", bg = "NONE" },
       border_active = { fg = "#00ff00", bg = "NONE" },
       border_inactive = { fg = "#ff0000", bg = "NONE" },
     },

@@ -10,9 +10,10 @@ local M = {}
 -- Build a border array with highlight groups.
 -- border: the base border array (array of chars)
 -- position: "left", "right", "top", or "bottom"
--- is_active: whether this is the active terminal
+-- hl_type: "active", "inactive", or "single"
 -- Returns a border array where each element is either a char or {char, highlight}
-M.build_highlighted_border = function(border, position, is_active)
+M.build_highlighted_border = function(border, position, hl_type)
+	local hl_single = highlights.resolve_hl(config.values.highlights.border_single, highlights.BORDER_SINGLE)
 	local hl_active = highlights.resolve_hl(config.values.highlights.border_active, highlights.BORDER_ACTIVE)
 	local hl_inactive = highlights.resolve_hl(config.values.highlights.border_inactive, highlights.BORDER_INACTIVE)
 
@@ -39,7 +40,14 @@ M.build_highlighted_border = function(border, position, is_active)
 	for i, char in ipairs(border) do
 		if char and char ~= "" then
 			local is_outer = outer_indices[i]
-			local hl = is_outer and (is_active and hl_active or hl_inactive) or hl_inactive
+			local hl
+			if hl_type == "single" then
+				hl = hl_single
+			elseif hl_type == "active" and is_outer then
+				hl = hl_active
+			else
+				hl = hl_inactive
+			end
 			result[i] = { char, hl }
 		else
 			result[i] = char
