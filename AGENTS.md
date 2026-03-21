@@ -1,4 +1,5 @@
 # AGENTS.md
+
 # Agentic coding guidelines for termite.nvim
 
 termite.nvim is a stacking float terminal manager for Neovim, written in Lua.
@@ -13,8 +14,10 @@ lua/termite/
   terminal.lua     - Terminal creation, lifecycle, buffer management
   layout/init.lua  - Layout module entry
   layout/stack.lua - Window geometry: positioning, sizing, reflow
+  layout/tmux.lua  - Tmux-style pane splitting
   borders.lua      - Border character definitions
   highlights.lua   - Highlight group setup
+  log.lua          - Debug logging utilities (dlog function)
 plugin/termite.lua - Autoloaded: autocmds and user commands
 spec/              - Tests using Plenary.nvim busted framework
 ```
@@ -22,11 +25,18 @@ spec/              - Tests using Plenary.nvim busted framework
 ## Commands
 
 ```bash
-make test              # Run all tests
-make test-file FILE=   # Run specific test file
-make lint              # Run luacheck linter
-make format            # Format code with stylua
-make check             # Run format, lint, and test
+make test                    # Run all tests
+make test-file FILE=<path>   # Run specific test file
+make lint                    # Run luacheck linter
+make format                  # Format code with stylua
+make check                   # Run format, lint, and test
+```
+
+**Examples:**
+
+```bash
+make test-file FILE=spec/config_spec.lua
+make test-file FILE=spec/layout/tmux_spec.lua
 ```
 
 ## Code Style
@@ -34,6 +44,7 @@ make check             # Run format, lint, and test
 ### Formatting
 
 **StyLua** handles all formatting via `.stylua.toml`:
+
 - Column width: 120
 - Indent: Tabs (width 1)
 - Quote style: AutoPreferDouble
@@ -89,6 +100,7 @@ Group all `require` at top. Use `local M = require("termite.module")` pattern.
 ### Error Handling
 
 Always validate handles before use:
+
 ```lua
 if term.win and vim.api.nvim_win_is_valid(term.win) then
 	-- safe to use term.win
@@ -96,17 +108,28 @@ end
 ```
 
 Use `pcall()` for operations that might fail:
+
 ```lua
 pcall(vim.api.nvim_win_set_cursor, win, { line_count, 0 })
 ```
 
 Use `vim.schedule()` for operations after async callbacks:
+
 ```lua
 vim.schedule(function()
 	if buf and vim.api.nvim_buf_is_valid(buf) then
 		vim.api.nvim_buf_delete(buf, { force = true })
 	end
 end)
+```
+
+### Debug Logging
+
+Use `log.dlog()` for debug output (prints to :messages when `config.debug = true`):
+
+```lua
+local log = require("termite.log")
+log.dlog("message", value, table)  -- Each arg printed on its own line via vim.inspect
 ```
 
 ### Neovim API Usage
@@ -135,6 +158,7 @@ end)
 Tests use Plenary.nvim with busted framework:
 
 Reset modules in `before_each` for fresh state:
+
 ```lua
 before_each(function()
 	package.loaded["termite.config"] = nil
@@ -164,11 +188,12 @@ Follow Conventional Commits with scope:
 - `test(component)` - Test additions or fixes
 - `chore:` - Build/tooling changes
 
-Scope examples: `terminal`, `layout`, `config`, `state`, `highlights`, `keymaps`
+Scope examples: `terminal`, `layout`, `config`, `state`, `highlights`, `keymaps`, `log`
 
 ## CI Workflow
 
 CI runs on push/PR to main branch:
+
 - Format check with StyLua
 - Lint with luacheck
 - Tests with Plenary

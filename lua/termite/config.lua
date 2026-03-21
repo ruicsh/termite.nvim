@@ -14,6 +14,7 @@ local DEFAULTS = {
 	shell = nil, -- Shell command (nil = default shell).
 	start_insert = true, -- Enter insert mode when focusing a terminal.
 	winbar = true, -- Show winbar with cwd and running process.
+	debug = false, -- Enable debug logging to :messages.
 	keymaps = {
 		toggle = "<c-bslash>", -- Toggle all terminals (terminal mode).
 		create = "<c-t>", -- Create new terminal.
