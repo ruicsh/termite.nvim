@@ -11,6 +11,14 @@
 --   require("termite").focus_terminals()    Focus the terminal stack.
 --   require("termite").close_current()      Close the focused terminal.
 --   require("termite").toggle_maximize()    Maximize/restore focused terminal.
+--   require("termite").split_up()           Split pane upward (tmux layout).
+--   require("termite").split_down()         Split pane downward (tmux layout).
+--   require("termite").split_left()         Split pane leftward (tmux layout).
+--   require("termite").split_right()        Split pane rightward (tmux layout).
+--   require("termite").focus_up()           Focus pane above (tmux layout).
+--   require("termite").focus_down()         Focus pane below (tmux layout).
+--   require("termite").focus_left()         Focus pane to the left (tmux layout).
+--   require("termite").focus_right()        Focus pane to the right (tmux layout).
 
 local config = require("termite.config")
 local highlights = require("termite.highlights")
@@ -45,12 +53,23 @@ end
 
 -- Helpers {{{
 
--- Find the index of the currently focused terminal.
+-- Find the index of the currently focused terminal (stack layout).
 local function get_focused_index()
 	local current_win = vim.api.nvim_get_current_win()
 	for i, term in ipairs(state.terminals) do
 		if term.win == current_win then
 			return i
+		end
+	end
+	return nil
+end
+
+-- Find the term_id of the currently focused terminal (tmux layout).
+local function get_focused_term_id()
+	local current_win = vim.api.nvim_get_current_win()
+	for _, term in ipairs(state.terminals) do
+		if term.win == current_win then
+			return term.term_id
 		end
 	end
 	return nil
@@ -84,7 +103,7 @@ local function update_border_highlights()
 	end
 end
 
--- Restore all hidden siblings when exiting maximized state. Used by multiple actions.
+-- Restore all hidden siblings when exiting maximized state (stack layout).
 local function restore_from_maximized()
 	state.maximized_idx = nil
 	for i, term in ipairs(state.terminals) do
@@ -111,6 +130,52 @@ end
 -- Remove a terminal from the stack by reference and reflow remaining.
 -- NOTE: Called from BufWipeout autocmd (e.g., when shell process exits).
 M.remove_terminal = function(term)
+	if config.values.layout == "tmux" then
+		-- Tmux layout: use tree-based removal.
+		local _, sibling_term_id = layout.remove(term.term_id)
+
+		-- Remove from terminals list.
+		for i, t in ipairs(state.terminals) do
+			if t == term then
+				table.remove(state.terminals, i)
+				break
+			end
+		end
+
+		if #state.terminals == 0 then
+			state.visible = false
+			state.pane_tree = nil
+			focus_editor_window()
+		elseif state.visible then
+			layout.reflow()
+			-- Always focus the sibling when a terminal closes (shell exit via <C-d>).
+			-- Don't check last_focused_term_id because Neovim auto-switches focus on BufWipeout.
+			local focused = false
+			if sibling_term_id then
+				for _, t in ipairs(state.terminals) do
+					if t.term_id == sibling_term_id and t.win and vim.api.nvim_win_is_valid(t.win) then
+						vim.api.nvim_set_current_win(t.win)
+						state.last_focused_term_id = sibling_term_id
+						focused = true
+						break
+					end
+				end
+			end
+			-- Fallback: focus any available terminal if sibling not found.
+			if not focused then
+				for _, t in ipairs(state.terminals) do
+					if t.win and vim.api.nvim_win_is_valid(t.win) then
+						vim.api.nvim_set_current_win(t.win)
+						state.last_focused_term_id = t.term_id
+						break
+					end
+				end
+			end
+		end
+		return
+	end
+
+	-- Stack layout: traditional removal.
 	local removed_idx = nil
 	for i, t in ipairs(state.terminals) do
 		if t == term then
@@ -145,8 +210,8 @@ M.remove_terminal = function(term)
 	end
 end
 
--- Show all hidden terminals.
-local function show_all()
+-- Show all hidden terminals (stack layout).
+local function show_all_stack()
 	state.maximized_idx = nil
 	for i, term in ipairs(state.terminals) do
 		local win_config = layout.get_win_config(i, #state.terminals)
@@ -175,8 +240,8 @@ local function show_all()
 	end
 end
 
--- Hide all terminals.
-local function hide_all()
+-- Hide all terminals (stack layout).
+local function hide_all_stack()
 	state.maximized_idx = nil
 	for _, term in ipairs(state.terminals) do
 		terminal.hide(term)
@@ -199,6 +264,43 @@ end
 M.toggle = function()
 	save_editor_window()
 
+	if config.values.layout == "tmux" then
+		-- Tmux layout: toggle pane visibility.
+		if not state.pane_tree then
+			-- Create root terminal.
+			layout.create_root()
+			return
+		end
+
+		if state.visible then
+			-- Check if focus is on a terminal.
+			local focused_id = get_focused_term_id()
+			if focused_id then
+				-- Hide all.
+				for _, term in ipairs(state.terminals) do
+					terminal.hide(term)
+				end
+				state.visible = false
+				focus_editor_window()
+			else
+				-- Focus terminals.
+				M.focus_terminals()
+			end
+		else
+			-- Show all.
+			for _, term in ipairs(state.terminals) do
+				if not term.win or not vim.api.nvim_win_is_valid(term.win) then
+					terminal.show(term)
+				end
+			end
+			state.visible = true
+			layout.reflow()
+			M.focus_terminals()
+		end
+		return
+	end
+
+	-- Stack layout: traditional toggle.
 	if state.visible and #state.terminals > 0 then
 		-- Check if any terminal window is actually open.
 		local any_visible = false
@@ -210,20 +312,20 @@ M.toggle = function()
 		end
 
 		if any_visible then
-			-- Check if focus is currently on a terminal
+			-- Check if focus is currently on a terminal.
 			local focused_idx = get_focused_index()
 			if focused_idx then
-				-- Focus is on a terminal, hide them
-				hide_all()
+				-- Focus is on a terminal, hide them.
+				hide_all_stack()
 			else
-				-- Focus is on editor, focus terminals instead
+				-- Focus is on editor, focus terminals instead.
 				M.focus_terminals()
 			end
 		else
-			show_all()
+			show_all_stack()
 		end
 	elseif #state.terminals > 0 then
-		show_all()
+		show_all_stack()
 	else
 		terminal.create()
 		state.last_focused_idx = #state.terminals
@@ -233,6 +335,15 @@ end
 
 -- Create a new terminal and add it to the stack.
 M.create = function()
+	if config.values.layout == "tmux" then
+		-- Tmux layout: split down from current pane.
+		if not state.pane_tree then
+			return layout.create_root()
+		end
+		return M.split_down()
+	end
+
+	-- Stack layout: traditional create.
 	-- If a terminal is maximized, restore all before adding a new one.
 	if state.maximized_idx then
 		restore_from_maximized()
@@ -256,6 +367,14 @@ end
 
 -- Focus the next terminal in the stack (wraps around).
 M.focus_next = function()
+	if config.values.layout == "tmux" then
+		-- For tmux, use right/down navigation.
+		if not layout.focus_down() then
+			layout.focus_right()
+		end
+		return
+	end
+
 	if state.maximized_idx then
 		return
 	end
@@ -279,6 +398,14 @@ end
 
 -- Focus the previous terminal in the stack (wraps around).
 M.focus_prev = function()
+	if config.values.layout == "tmux" then
+		-- For tmux, use left/up navigation.
+		if not layout.focus_up() then
+			layout.focus_left()
+		end
+		return
+	end
+
 	if state.maximized_idx then
 		return
 	end
@@ -327,6 +454,33 @@ M.focus_terminals = function()
 		return
 	end
 
+	if config.values.layout == "tmux" then
+		local focus_id = state.last_focused_term_id
+		for _, term in ipairs(state.terminals) do
+			if term.term_id == focus_id then
+				if term.win and vim.api.nvim_win_is_valid(term.win) then
+					vim.api.nvim_set_current_win(term.win)
+					if config.values.start_insert then
+						vim.cmd.startinsert()
+					end
+				end
+				return
+			end
+		end
+		-- Fallback: focus first available.
+		for _, term in ipairs(state.terminals) do
+			if term.win and vim.api.nvim_win_is_valid(term.win) then
+				vim.api.nvim_set_current_win(term.win)
+				state.last_focused_term_id = term.term_id
+				if config.values.start_insert then
+					vim.cmd.startinsert()
+				end
+				return
+			end
+		end
+		return
+	end
+
 	local focus_idx = state.last_focused_idx or #state.terminals
 	focus_idx = math.min(focus_idx, #state.terminals)
 	local term = state.terminals[focus_idx]
@@ -341,6 +495,56 @@ end
 
 -- Close the currently focused terminal and remove it from the stack.
 M.close_current = function()
+	if config.values.layout == "tmux" then
+		local term_id = get_focused_term_id()
+		if not term_id then
+			return
+		end
+
+		-- Find terminal entry.
+		local term = nil
+		for _, t in ipairs(state.terminals) do
+			if t.term_id == term_id then
+				term = t
+				break
+			end
+		end
+
+		if not term then
+			return
+		end
+
+		-- Remove from tree.
+		layout.remove(term_id)
+
+		-- Remove from list and close.
+		for i, t in ipairs(state.terminals) do
+			if t == term then
+				table.remove(state.terminals, i)
+				break
+			end
+		end
+		terminal.close(term)
+
+		if #state.terminals == 0 then
+			state.visible = false
+			state.pane_tree = nil
+			focus_editor_window()
+		elseif state.visible then
+			layout.reflow()
+			-- Try to focus an adjacent pane.
+			for _, t in ipairs(state.terminals) do
+				if t.win and vim.api.nvim_win_is_valid(t.win) then
+					vim.api.nvim_set_current_win(t.win)
+					state.last_focused_term_id = t.term_id
+					break
+				end
+			end
+		end
+		return
+	end
+
+	-- Stack layout: traditional close.
 	local idx = get_focused_index()
 	if not idx then
 		return
@@ -387,6 +591,15 @@ end
 
 -- Maximize the focused terminal or restore if already maximized.
 M.toggle_maximize = function()
+	if config.values.layout == "tmux" then
+		local term_id = get_focused_term_id()
+		if not term_id then
+			return
+		end
+		layout.toggle_maximize(term_id)
+		return
+	end
+
 	local idx = get_focused_index()
 	if not idx then
 		return
@@ -425,6 +638,42 @@ M.toggle_maximize = function()
 		update_border_highlights()
 	end
 end
+
+-- Split panes in cardinal directions (tmux layout).
+M.split_up = function()
+	layout.split_up()
+end
+
+M.split_down = function()
+	layout.split_down()
+end
+
+M.split_left = function()
+	layout.split_left()
+end
+
+M.split_right = function()
+	layout.split_right()
+end
+
+-- Focus adjacent panes in cardinal directions.
+M.focus_up = function()
+	layout.focus_up()
+end
+
+M.focus_down = function()
+	layout.focus_down()
+end
+
+M.focus_left = function()
+	layout.focus_left()
+end
+
+M.focus_right = function()
+	layout.focus_right()
+end
+
+-- }}}
 
 return M
 

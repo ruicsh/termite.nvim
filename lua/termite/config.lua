@@ -6,6 +6,7 @@ local BORDER_STYLES = require("termite.borders")
 local M = {}
 
 local DEFAULTS = {
+	layout = "stack", -- Layout mode: "stack" or "tmux".
 	width = 0.5, -- Fraction of editor width (for left/right positions).
 	height = 0.5, -- Fraction of editor height (for top/bottom positions).
 	position = "right", -- Panel position: "left", "right", "top", or "bottom".
@@ -22,6 +23,16 @@ local DEFAULTS = {
 		normal_mode = "<c-[>", -- Exit terminal insert mode.
 		maximize = "<c-z>", -- Maximize/restore focused terminal.
 		close = "q", -- Close current terminal (normal mode).
+		-- Tmux layout: split panes.
+		split_up = "<s-up>", -- Split pane upward.
+		split_down = "<s-down>", -- Split pane downward.
+		split_left = "<s-left>", -- Split pane leftward.
+		split_right = "<s-right>", -- Split pane rightward.
+		-- Tmux layout: focus adjacent panes.
+		focus_up = "<c-up>", -- Focus pane above.
+		focus_down = "<c-down>", -- Focus pane below.
+		focus_left = "<c-left>", -- Focus pane to the left.
+		focus_right = "<c-right>", -- Focus pane to the right.
 	},
 	wo = { -- Window options applied to terminal windows.
 		signcolumn = "yes:1",

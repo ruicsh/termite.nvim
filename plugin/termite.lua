@@ -67,6 +67,16 @@ local SUBCOMMANDS = {
 	prev = "focus_prev",
 	editor = "focus_editor",
 	terminals = "focus_terminals",
+	-- Split panes.
+	split_up = "split_up",
+	split_down = "split_down",
+	split_left = "split_left",
+	split_right = "split_right",
+	-- Focus panes.
+	focus_up = "focus_up",
+	focus_down = "focus_down",
+	focus_left = "focus_left",
+	focus_right = "focus_right",
 }
 
 vim.api.nvim_create_user_command("Termite", function(opts)

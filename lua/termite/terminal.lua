@@ -66,11 +66,44 @@ M.setup_keymaps = function(bufnr)
 	map("n", km.close, function()
 		termite.close_current()
 	end, "Close")
+	-- Split panes (tmux layout).
+	map("t", km.split_up, function()
+		termite.split_up()
+	end, "Split pane up")
+	map("t", km.split_down, function()
+		termite.split_down()
+	end, "Split pane down")
+	map("t", km.split_left, function()
+		termite.split_left()
+	end, "Split pane left")
+	map("t", km.split_right, function()
+		termite.split_right()
+	end, "Split pane right")
+	-- Focus adjacent panes (tmux layout).
+	map("t", km.focus_up, function()
+		termite.focus_up()
+	end, "Focus pane up")
+	map("t", km.focus_down, function()
+		termite.focus_down()
+	end, "Focus pane down")
+	map("t", km.focus_left, function()
+		termite.focus_left()
+	end, "Focus pane left")
+	map("t", km.focus_right, function()
+		termite.focus_right()
+	end, "Focus pane right")
 end
 
 -- Create a new terminal. Opens a float window, starts a shell, sets up keymaps and
 -- cleanup autocmds. Returns the terminal entry table { buf, win, config }.
-M.create = function()
+--
+-- opts (optional table):
+--   term_id: Unique terminal ID for tmux layout.
+--   row, col, width, height: Geometry for tmux layout.
+--   cwd: Working directory (defaults to current directory).
+M.create = function(opts)
+	opts = opts or {}
+
 	local count = state.next_count
 	state.next_count = state.next_count + 1
 
@@ -78,15 +111,34 @@ M.create = function()
 
 	-- Reflow existing terminals first to make room for the new one. This avoids a
 	-- visual glitch where the existing terminals momentarily overlap with the new one
-	-- before being resized.
-	for i, t in ipairs(state.terminals) do
-		if t.win and vim.api.nvim_win_is_valid(t.win) then
-			local cfg = layout.get_win_config(i, total)
-			layout.apply_config(t, cfg)
+	-- before being resized. Only do this for stack layout.
+	if config.values.layout ~= "tmux" then
+		for i, t in ipairs(state.terminals) do
+			if t.win and vim.api.nvim_win_is_valid(t.win) then
+				local cfg = layout.get_win_config(i, total)
+				layout.apply_config(t, cfg)
+			end
 		end
 	end
 
-	local win_config = layout.get_win_config(total, total)
+	local win_config
+	if opts.row and opts.col and opts.width and opts.height then
+		-- Tmux layout: use provided geometry.
+		win_config = {
+			relative = "editor",
+			row = opts.row,
+			col = opts.col,
+			width = opts.width,
+			height = opts.height,
+			anchor = "NW",
+			style = "minimal",
+			border = "none",
+			zindex = 50,
+		}
+	else
+		-- Stack layout: compute from layout module.
+		win_config = layout.get_win_config(total, total)
+	end
 
 	-- Create a scratch buffer for the terminal.
 	local buf = vim.api.nvim_create_buf(false, true)
@@ -111,8 +163,10 @@ M.create = function()
 
 	-- Start the shell inside the terminal buffer.
 	local shell = config.values.shell or vim.o.shell
+	local term_cwd = opts.cwd or vim.fn.getcwd()
 	vim.fn.jobstart(shell, {
 		term = true,
+		cwd = term_cwd,
 		on_exit = function()
 			-- Wipe the buffer when the shell process exits. This triggers the BufWipeout
 			-- autocmd below, which removes the terminal from the stack.
@@ -130,8 +184,13 @@ M.create = function()
 		win = win,
 		config = win_config,
 		count = count,
-		cwd = vim.fn.getcwd(),
+		cwd = term_cwd,
 	}
+
+	-- Assign term_id for tmux layout.
+	if opts.term_id then
+		term.term_id = opts.term_id
+	end
 
 	table.insert(state.terminals, term)
 	state.visible = true

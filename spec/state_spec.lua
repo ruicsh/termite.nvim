@@ -371,8 +371,15 @@ describe("state management", function()
 			termite.toggle()
 			assert.are.equal(true, state.visible)
 			local current_win = vim.api.nvim_get_current_win()
-			local current_buf = vim.api.nvim_win_get_buf(current_win)
-			assert.are.equal("terminal", vim.bo[current_buf].buftype)
+			-- Verify we're on a terminal window (one of the terminals has this window)
+			local found = false
+			for _, term in ipairs(state.terminals) do
+				if term.win == current_win then
+					found = true
+					break
+				end
+			end
+			assert.is_true(found, "Expected to be focused on a terminal window")
 		end)
 
 		it("creates terminal when no terminals exist", function()

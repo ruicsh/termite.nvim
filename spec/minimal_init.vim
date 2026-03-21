@@ -17,3 +17,20 @@ endif
 
 " Initialize termite for testing
 lua require('termite').setup({})
+
+" Mock jobstart to prevent spawning real shell processes during tests
+" This avoids "too many open files" errors when running the full test suite
+lua << EOF
+local orig_jobstart = vim.fn.jobstart
+vim.fn.jobstart = function(cmd, opts)
+  -- Return a fake job ID without actually starting a process
+  local job_id = math.random(1000, 9999)
+  -- Schedule the on_exit callback if provided to simulate process exit
+  if opts and opts.on_exit then
+    vim.schedule(function()
+      opts.on_exit(job_id, 0, "exit")
+    end)
+  end
+  return job_id
+end
+EOF

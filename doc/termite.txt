@@ -10,7 +10,8 @@ CONTENTS                                                  *termite-contents*
 5. Keymaps ......................... |termite-keymaps|
 6. Commands ........................ |termite-commands|
 7. API ............................. |termite-api|
-8. Highlights ...................... |termite-highlights|
+8. Layouts ......................... |termite-layouts|
+9. Highlights ...................... |termite-highlights|
 
 ================================================================================
 1. INTRODUCTION                                      *termite-introduction*
@@ -20,16 +21,15 @@ vertically or horizontally stacked floating terminal windows, allowing you to
 manage multiple shell sessions with ease.
 
 Features:
-- Vertically stacked floating terminals on the left or right side
-- Horizontally stacked floating terminals on the top or bottom
+- Two layout modes: "stack" (default) and "tmux" style splits
 - Toggle all terminals (show/hide) with a single key
 - Create multiple terminals that automatically resize and reflow
-- Navigate between terminals (next/previous)
+- Navigate between terminals (next/previous in stack, cardinal in tmux)
 - Maximize/restore individual terminals to full height/width
 - Focus editor while keeping terminals visible, and focus back with a single key
 - Custom shell support
 - Full keymap customization
-- Border highlighting for single, active, and inactive terminals (outer edge only)
+- Border highlighting for stack layout (single, active, inactive)
 - Winbar showing running process or cwd
 
 ================================================================================
@@ -63,6 +63,7 @@ Parameters:
 Default configuration:
 >
   {
+    layout = "stack",      -- Layout mode: "stack" or "tmux"
     width = 0.5,           -- Fraction of editor width for left/right positions
     height = 0.5,          -- Fraction of editor height for top/bottom positions
     position = "right",    -- Panel position: "left", "right", "top", or "bottom"
@@ -74,12 +75,21 @@ Default configuration:
     keymaps = {
       toggle = "<C-\\>",   -- Toggle all terminals
       create = "<C-t>",    -- Create new terminal
-      next = "<C-j>",      -- Focus next terminal
-      prev = "<C-k>",      -- Focus previous terminal
+      next = "<C-j>",      -- Focus next terminal (stack layout)
+      prev = "<C-k>",      -- Focus previous terminal (stack layout)
       focus_editor = "<C-e>",  -- Focus editor window
       normal_mode = "<C-[>",   -- Exit to normal mode
       maximize = "<C-z>",      -- Maximize/restore terminal
       close = "q",             -- Close terminal (normal mode)
+      -- Tmux layout:
+      split_up = "<S-Up>",     -- Split pane upward
+      split_down = "<S-Down>", -- Split pane downward
+      split_left = "<S-Left>", -- Split pane leftward
+      split_right = "<S-Right>", -- Split pane rightward
+      focus_up = "<C-Up>",     -- Focus pane above
+      focus_down = "<C-Down>", -- Focus pane below
+      focus_left = "<C-Left>", -- Focus pane to the left
+      focus_right = "<C-Right>", -- Focus pane to the right
     },
 
     wo = {
@@ -89,6 +99,19 @@ Default configuration:
 <
 
 Configuration options:
+
+*termite-config-layout*
+layout (string)
+  Layout mode for terminal management. One of:
+    - "stack"  - Vertically or horizontally stacked terminals (default)
+    - "tmux"   - Tmux-style split panes with cardinal navigation
+  Default: "stack"
+
+  Stack layout: Terminals are stacked in a single column/row based on
+  |termite-config-position|. Supports border highlighting.
+
+  Tmux layout: Allows creating panes in any direction (up, down, left, right).
+  Uses a binary tree structure. No borders between panes.
 
 *termite-config-width*
 width (number)
@@ -202,36 +225,36 @@ To disable a keymap, set it to false:
 
 Default keymaps:
 
-  Terminal Mode:
-    <C-\>      Toggle all terminals (smart: focus back)
+  Terminal Mode (all layouts):
+    <C-\>       Toggle all terminals (smart: focus back)
     <C-t>       Create new terminal
-    <C-j>       Focus next terminal
-    <C-k>       Focus previous terminal
     <C-e>       Focus editor window
     <C-[>       Exit to normal mode
     <C-z>       Maximize/restore terminal
+
+  Terminal Mode (stack layout only):
+    <C-j>       Focus next terminal
+    <C-k>       Focus previous terminal
+
+  Terminal Mode (tmux layout only):
+    <S-Up>      Split pane upward
+    <S-Down>    Split pane downward
+    <S-Left>    Split pane leftward
+    <S-Right>   Split pane rightward
+    <C-Up>      Focus pane above
+    <C-Down>    Focus pane below
+    <C-Left>    Focus pane to the left
+    <C-Right>   Focus pane to the right
 
   Normal Mode (within terminal):
     q           Close current terminal
 
   Normal Mode (global):
-    <C-\>      Toggle all terminals (smart: focus back)
+    <C-\>       Toggle all terminals
     <C-t>       Create new terminal
 
   Smart toggle: When terminals are visible and you press <C-\> while focus is
   on the editor, it focuses the terminals instead of hiding them.
-    <C-j>       Focus next terminal
-    <C-k>       Focus previous terminal
-    <C-e>       Focus editor window
-    <C-[>       Exit to normal mode
-    <C-z>       Maximize/restore terminal
-
-  Normal Mode (within terminal):
-    q           Close current terminal
-
-  Normal Mode (global):
-    <C-\\>      Toggle all terminals
-    <C-t>       Create new terminal
 
 ================================================================================
 6. COMMANDS                                            *termite-commands*
@@ -263,9 +286,11 @@ termite.create()                                        *termite-create()*
 
 termite.focus_next()                                    *termite-focus_next()*
   Focus the next terminal in the stack. Wraps around to first.
+  Stack layout only.
 
 termite.focus_prev()                                    *termite-focus_prev()*
   Focus the previous terminal in the stack. Wraps around to last.
+  Stack layout only.
 
 termite.focus_editor()                                  *termite-focus_editor()*
   Focus the editor window while keeping terminals visible.
@@ -280,31 +305,111 @@ termite.toggle_maximize()                               *termite-toggle_maximize
   Maximize the focused terminal to full height, or restore if already
   maximized.
 
+termite.split_up()                                      *termite-split_up()*
+  Split the current pane upward, creating a new terminal above.
+  Tmux layout only.
+
+termite.split_down()                                    *termite-split_down()*
+  Split the current pane downward, creating a new terminal below.
+  Tmux layout only.
+
+termite.split_left()                                    *termite-split_left()*
+  Split the current pane leftward, creating a new terminal to the left.
+  Tmux layout only.
+
+termite.split_right()                                   *termite-split_right()*
+  Split the current pane rightward, creating a new terminal to the right.
+  Tmux layout only.
+
+termite.focus_up()                                      *termite-focus_up()*
+  Focus the pane above the current one. Tmux layout only.
+
+termite.focus_down()                                    *termite-focus_down()*
+  Focus the pane below the current one. Tmux layout only.
+
+termite.focus_left()                                    *termite-focus_left()*
+  Focus the pane to the left of the current one. Tmux layout only.
+
+termite.focus_right()                                   *termite-focus_right()*
+  Focus the pane to the right of the current one. Tmux layout only.
+
 termite.setup({config})
   Configure the plugin. See |termite-configuration|.
 
 ================================================================================
-8. HIGHLIGHTS                                          *termite-highlights*
+8. LAYOUTS                                              *termite-layouts*
 
-termite.nvim uses three highlight groups for border colors:
+termite.nvim supports two layout modes:
+
+Stack Layout (~
+)
+The default layout. Terminals are stacked in a single column or row based on
+|termite-config-position|:
+- "left"/"right": Vertically stacked terminals
+- "top"/"bottom": Horizontally stacked terminals
+
+Features:
+- Configurable borders with highlight groups (|termite-highlights|)
+- Sequential navigation (next/previous) through terminals
+- Simple linear layout
+
+Set with: >lua
+  require("termite").setup({ layout = "stack" })
+
+Tmux Layout (~
+)
+Tmux-style pane splits with cardinal navigation. Allows creating panes in any
+direction (up, down, left, right) forming a binary tree structure.
+
+Features:
+- No visible borders between panes (cleaner look)
+- Split panes in any cardinal direction
+- Spatial navigation using arrow keys
+- Automatic reflow on resize or split/close
+
+Set with: >lua
+  require("termite").setup({
+    layout = "tmux",
+    position = "right",
+    width = 0.5,
+    height = 0.5,
+  })
+
+Layout Comparison (~
+)
+
+| Feature      | Stack Layout    | Tmux Layout         |
+| ------------ | --------------- | ------------------- |
+| Borders      | Yes             | No                  |
+| Navigation   | Sequential      | Spatial (arrow keys)|
+| Splitting    | Auto-stacked    | Manual directional  |
+| Structure    | Linear stack    | Binary tree         |
+
+================================================================================
+9. HIGHLIGHTS                                          *termite-highlights*
+
+termite.nvim uses highlight groups for border colors (stack layout only):
 
 TermiteBorderSingle                                      *hl-TermiteBorderSingle*
   Applied when there is only one terminal visible.
+  Stack layout only.
   Default: links to |hl-FloatBorder|
 
 TermiteBorder                                            *hl-TermiteBorder*
   Applied to the straight-line outer edge of the active (focused) terminal
   when there are 2 or more terminals visible.
   Corners are not highlighted - only the straight line segment facing the
-  editor.
+  editor. Stack layout only.
   Default: links to |hl-FloatBorder|
 
 TermiteBorderNC                                          *hl-TermiteBorderNC*
   Applied to inactive terminal borders and all corner characters.
+  Stack layout only.
   Default: links to |hl-Comment|
 
 TermiteWinbar                                            *hl-TermiteWinbar*
   Applied to the winbar text showing running process or cwd.
+  Used by both layouts.
   Default: links to |hl-Normal|
 
 To customize in your colorscheme: >lua

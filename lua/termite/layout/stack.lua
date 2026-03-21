@@ -278,6 +278,114 @@ M.reflow = function()
 	end
 end
 
+-- Directional focus functions (sensible fallback for stack layout) {{{
+
+-- Find the index of the currently focused terminal.
+local function get_focused_index()
+	local current_win = vim.api.nvim_get_current_win()
+	for i, term in ipairs(state.terminals) do
+		if term.win == current_win then
+			return i
+		end
+	end
+	return nil
+end
+
+-- Focus helpers for stack layout.
+-- For vertical stacks (left/right), focus_up/down work as prev/next.
+-- For horizontal stacks (top/bottom), focus_left/right work as prev/next.
+M.focus_up = function()
+	local position = config.values.position
+	if position == "left" or position == "right" then
+		-- Vertical stack: up = prev
+		local idx = get_focused_index()
+		if idx and idx > 1 then
+			local term = state.terminals[idx - 1]
+			if term and term.win and vim.api.nvim_win_is_valid(term.win) then
+				vim.api.nvim_set_current_win(term.win)
+				return true
+			end
+		end
+	end
+	return false
+end
+
+M.focus_down = function()
+	local position = config.values.position
+	if position == "left" or position == "right" then
+		-- Vertical stack: down = next
+		local idx = get_focused_index()
+		if idx and idx < #state.terminals then
+			local term = state.terminals[idx + 1]
+			if term and term.win and vim.api.nvim_win_is_valid(term.win) then
+				vim.api.nvim_set_current_win(term.win)
+				return true
+			end
+		end
+	end
+	return false
+end
+
+M.focus_left = function()
+	local position = config.values.position
+	if position == "top" or position == "bottom" then
+		-- Horizontal stack: left = prev
+		local idx = get_focused_index()
+		if idx and idx > 1 then
+			local term = state.terminals[idx - 1]
+			if term and term.win and vim.api.nvim_win_is_valid(term.win) then
+				vim.api.nvim_set_current_win(term.win)
+				return true
+			end
+		end
+	end
+	return false
+end
+
+M.focus_right = function()
+	local position = config.values.position
+	if position == "top" or position == "bottom" then
+		-- Horizontal stack: right = next
+		local idx = get_focused_index()
+		if idx and idx < #state.terminals then
+			local term = state.terminals[idx + 1]
+			if term and term.win and vim.api.nvim_win_is_valid(term.win) then
+				vim.api.nvim_set_current_win(term.win)
+				return true
+			end
+		end
+	end
+	return false
+end
+
+-- }}}}
+
+-- Split functions (creates new terminal with adjusted geometry) {{{
+
+-- Create a split in the given direction. Returns nil (creates via termite.create).
+-- For stack layout, this just creates a new terminal (splits are not spatial).
+M.split_up = function()
+	local termite = require("termite")
+	termite.create()
+end
+
+M.split_down = function()
+	local termite = require("termite")
+	termite.create()
+end
+
+M.split_left = function()
+	local termite = require("termite")
+	termite.create()
+end
+
+M.split_right = function()
+	local termite = require("termite")
+	termite.create()
+end
+
+-- }}}}
+
 return M
 
 -- vim: foldmethod=marker:foldmarker={{{,}}}:foldlevel=0
