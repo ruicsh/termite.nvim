@@ -8,7 +8,7 @@
 
 # Test all spec files
 test:
-	@nvim --headless -c "PlenaryBustedDirectory spec/ {minimal_init = 'spec/minimal_init.vim'}"
+	@nvim --headless --noplugin -u spec/init.lua -c "PlenaryBustedDirectory spec/ {minimal_init = 'spec/minimal_init.vim'}"
 
 # Test a single file (usage: make test-file FILE=spec/config_spec.lua)
 test-file:
