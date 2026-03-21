@@ -1,5 +1,5 @@
 -- termite.nvim
--- Window geometry: positioning, sizing, and reflow.
+-- Window geometry: positioning, sizing, and reflow for stack layout.
 
 local config = require("termite.config")
 local highlights = require("termite.highlights")

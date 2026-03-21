@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Lint with luacheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Lua
+        uses: leafo/gh-actions-lua@v10
+        with:
+          luaVersion: "5.4"
+      - name: Install LuaRocks
+        uses: leafo/gh-actions-luarocks@v4
+      - name: Install luacheck
+        run: luarocks install luacheck
+      - name: Run luacheck
+        run: luacheck lua/ plugin/ spec/
+
+  format:
+    name: Check formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check StyLua formatting
+        uses: JohnnyMorganz/stylua-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: latest
+          args: --check lua/ plugin/ spec/
+
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Neovim
+        uses: rhymond/setup-neovim@v1
+        with:
+          neovim-version: stable
+      - name: Clone plenary.nvim
+        uses: actions/checkout@v4
+        with:
+          repository: nvim-lua/plenary.nvim
+          path: vendor/plenary.nvim
+      - name: Run tests
+        run: |
+          nvim --headless -c "let &rtp .= ',' . getcwd() . '/vendor/plenary.nvim'" -c "PlenaryBustedDirectory spec/ {minimal_init = 'spec/minimal_init.vim'}"

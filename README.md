@@ -234,6 +234,36 @@ highlights.BORDER_INACTIVE       -- "TermiteBorderNC"
 highlights.setup()
 ```
 
+## Testing
+
+Tests use [plenary.nvim](https://github.com/nvim-lua/plenary.nvim). Install it as a dev dependency:
+
+```lua
+-- lazy.nvim
+{
+  "ruicsh/termite.nvim",
+  dependencies = { "nvim-lua/plenary.nvim", optional = true },
+}
+```
+
+Run tests:
+
+```bash
+# All tests
+nvim --headless -c "PlenaryBustedDirectory spec/ {minimal_init = 'spec/minimal_init.vim'}"
+
+# Single file
+nvim --headless -c "PlenaryBustedFile spec/config_spec.lua"
+```
+
+### Test Coverage
+
+- `spec/borders_spec.lua` - Border character definitions (6 styles)
+- `spec/config_spec.lua` - Configuration and defaults
+- `spec/highlights_spec.lua` - Highlight group management
+- `spec/terminal_spec.lua` - Terminal helper functions
+- `spec/layout/stack_spec.lua` - Window geometry calculations
+
 ## License
 
 MIT License - see [LICENSE](LICENSE)
