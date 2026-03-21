@@ -186,6 +186,161 @@ describe("layout.stack module", function()
 			local usable_height = editor_height - 1 -- 46
 			assert.are.equal(usable_height, win_config.height)
 		end)
+
+		describe("top position", function()
+			before_each(function()
+				config.setup({ position = "top", height = 0.3 })
+				package.loaded["termite.layout"] = nil
+				package.loaded["termite.layout.stack"] = nil
+				layout = require("termite.layout")
+			end)
+
+			it("returns correct anchor for top position", function()
+				setup_vim_mock(100, 50, 1, 2, 1)
+
+				local win_config = layout.get_win_config(1, 1)
+
+				assert.are.equal("NW", win_config.anchor)
+			end)
+
+			it("returns correct height for top position", function()
+				setup_vim_mock(100, 50, 1, 2, 1)
+
+				local win_config = layout.get_win_config(1, 1)
+				local editor_height = 50 - 1 - 1 -- 48
+				local expected_height = math.floor(editor_height * 0.3)
+
+				assert.are.equal(expected_height, win_config.height)
+			end)
+
+			it("returns correct row for top position", function()
+				setup_vim_mock(100, 50, 1, 2, 1)
+
+				local win_config = layout.get_win_config(1, 1)
+
+				assert.are.equal(0, win_config.row)
+			end)
+
+			it("stacks terminals horizontally from left to right", function()
+				setup_vim_mock(100, 50, 1, 2, 1)
+
+				local win_config_1 = layout.get_win_config(1, 2)
+				local win_config_2 = layout.get_win_config(2, 2)
+
+				-- First terminal starts at column 0
+				assert.are.equal(0, win_config_1.col)
+				-- Second terminal starts after first + border
+				assert.is_true(win_config_2.col > win_config_1.col)
+			end)
+
+			it("calculates correct width for each terminal", function()
+				setup_vim_mock(100, 50, 1, 2, 1)
+
+				local total = 2
+				local usable_width = 100 - total -- 98
+				local each_width = math.floor(usable_width / total) -- 49
+
+				local win_config_1 = layout.get_win_config(1, total)
+				local win_config_2 = layout.get_win_config(2, total)
+
+				assert.are.equal(each_width, win_config_1.width)
+				assert.are.equal(usable_width - each_width, win_config_2.width)
+			end)
+
+			it("uses horizontal separator between terminals", function()
+				setup_vim_mock(100, 50, 1, 2, 1)
+
+				local win_config_1 = layout.get_win_config(1, 2)
+				local win_config_2 = layout.get_win_config(2, 2)
+
+				-- First terminal has vertical separator at right
+				assert.are.equal("│", win_config_1.border[3])
+				-- Last terminal has no right separator
+				assert.are.equal("", win_config_2.border[3])
+			end)
+		end)
+
+		describe("bottom position", function()
+			before_each(function()
+				config.setup({ position = "bottom", height = 0.3 })
+				package.loaded["termite.layout"] = nil
+				package.loaded["termite.layout.stack"] = nil
+				layout = require("termite.layout")
+			end)
+
+			it("returns correct anchor for bottom position", function()
+				setup_vim_mock(100, 50, 1, 2, 1)
+
+				local win_config = layout.get_win_config(1, 1)
+
+				assert.are.equal("SW", win_config.anchor)
+			end)
+
+			it("returns correct row for bottom position", function()
+				setup_vim_mock(100, 50, 1, 2, 1)
+
+				local win_config = layout.get_win_config(1, 1)
+				local editor_height = 50 - 1 - 1 -- 48
+
+				assert.are.equal(editor_height, win_config.row)
+			end)
+
+			it("stacks terminals horizontally from left to right", function()
+				setup_vim_mock(100, 50, 1, 2, 1)
+
+				local win_config_1 = layout.get_win_config(1, 2)
+				local win_config_2 = layout.get_win_config(2, 2)
+
+				-- First terminal starts at column 0
+				assert.are.equal(0, win_config_1.col)
+				-- Second terminal starts after first + border
+				assert.is_true(win_config_2.col > win_config_1.col)
+			end)
+
+			it("has horizontal borders for bottom position", function()
+				setup_vim_mock(100, 50, 1, 2, 1)
+
+				local win_config = layout.get_win_config(1, 1)
+
+				-- Bottom position should have horizontal borders at top
+				assert.are.equal("─", win_config.border[1])
+				assert.are.equal("─", win_config.border[2])
+			end)
+		end)
+
+		describe("left position", function()
+			before_each(function()
+				config.setup({ position = "left", width = 0.5 })
+				package.loaded["termite.layout"] = nil
+				package.loaded["termite.layout.stack"] = nil
+				layout = require("termite.layout")
+			end)
+
+			it("returns correct anchor for left position", function()
+				setup_vim_mock(100, 50, 1, 2, 1)
+
+				local win_config = layout.get_win_config(1, 1)
+
+				assert.are.equal("NW", win_config.anchor)
+			end)
+
+			it("returns correct col for left position", function()
+				setup_vim_mock(100, 50, 1, 2, 1)
+
+				local win_config = layout.get_win_config(1, 1)
+
+				assert.are.equal(0, win_config.col)
+			end)
+
+			it("uses vertical separator on right edge for left position", function()
+				setup_vim_mock(100, 50, 1, 2, 1)
+
+				local win_config_1 = layout.get_win_config(1, 2)
+
+				-- First terminal should have vertical separator at right
+				assert.are.equal("│", win_config_1.border[4])
+			end)
+		end)
 	end)
 
 	describe("build_highlighted_border()", function()

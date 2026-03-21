@@ -315,6 +315,159 @@ describe("state management", function()
 			assert.are.equal(5, state.next_count)
 		end)
 	end)
+
+	describe("focus_editor()", function()
+		it("focuses saved editor window when valid", function()
+			local editor_win = vim.api.nvim_get_current_win()
+
+			termite.create()
+			-- After create, we're in terminal window
+			assert.are_not.equal(editor_win, vim.api.nvim_get_current_win())
+
+			termite.focus_editor()
+			assert.are.equal(editor_win, vim.api.nvim_get_current_win())
+		end)
+
+		it("focuses any non-terminal non-floating window as fallback", function()
+			-- Create a new normal window as fallback
+			vim.cmd("split")
+			vim.cmd("q")
+
+			termite.create()
+			-- Close the original editor window
+			if state.last_editor_winnr and vim.api.nvim_win_is_valid(state.last_editor_winnr) then
+				vim.api.nvim_win_close(state.last_editor_winnr, true)
+			end
+			state.last_editor_winnr = nil
+
+			termite.focus_editor()
+			local current_win = vim.api.nvim_get_current_win()
+			local current_buf = vim.api.nvim_win_get_buf(current_win)
+			local buftype = vim.bo[current_buf].buftype
+
+			assert.are_not.equal("terminal", buftype)
+		end)
+	end)
+
+	describe("toggle() smart focus", function()
+		it("hides terminals when focused on terminal", function()
+			termite.create()
+			termite.create()
+			assert.are.equal(true, state.visible)
+			assert.are.equal(2, #state.terminals)
+
+			termite.toggle()
+			assert.are.equal(false, state.visible)
+		end)
+
+		it("focuses terminals when focused on editor", function()
+			termite.create()
+			termite.create()
+
+			-- Focus back to editor
+			termite.focus_editor()
+
+			-- Toggle when focused on editor should focus terminals, not hide
+			termite.toggle()
+			assert.are.equal(true, state.visible)
+			local current_win = vim.api.nvim_get_current_win()
+			local current_buf = vim.api.nvim_win_get_buf(current_win)
+			assert.are.equal("terminal", vim.bo[current_buf].buftype)
+		end)
+
+		it("creates terminal when no terminals exist", function()
+			assert.are.equal(0, #state.terminals)
+
+			termite.toggle()
+
+			assert.are.equal(1, #state.terminals)
+			assert.are.equal(true, state.visible)
+		end)
+	end)
+
+	describe("focus_terminals()", function()
+		it("focuses the last focused terminal", function()
+			termite.create()
+			termite.create()
+			termite.create()
+			local last_idx = state.last_focused_idx
+			assert.are.equal(3, last_idx)
+
+			-- Focus editor first
+			termite.focus_editor()
+
+			termite.focus_terminals()
+			local current_win = vim.api.nvim_get_current_win()
+			assert.are.equal(state.terminals[last_idx].win, current_win)
+		end)
+
+		it("does nothing when no terminals visible", function()
+			termite.create()
+			termite.toggle() -- Hide terminals
+			assert.are.equal(false, state.visible)
+
+			local original_win = vim.api.nvim_get_current_win()
+			termite.focus_terminals()
+			assert.are.equal(original_win, vim.api.nvim_get_current_win())
+		end)
+	end)
+
+	describe("remove_terminal()", function()
+		it("removes terminal from state when buffer is wiped", function()
+			termite.create()
+			termite.create()
+			assert.are.equal(2, #state.terminals)
+
+			local term_to_remove = state.terminals[1]
+			-- Simulate buffer wipeout (which triggers remove_terminal)
+			termite.remove_terminal(term_to_remove)
+
+			assert.are.equal(1, #state.terminals)
+		end)
+
+		it("adjusts maximized_idx when removing earlier terminal", function()
+			termite.create()
+			termite.create()
+			termite.create()
+			termite.toggle_maximize() -- Maximize terminal 3
+			assert.are.equal(3, state.maximized_idx)
+
+			-- Remove terminal 1 (earlier than maximized)
+			termite.remove_terminal(state.terminals[1])
+
+			assert.are.equal(2, state.maximized_idx) -- Adjusted down by 1
+		end)
+	end)
+
+	describe("toggle_maximize()", function()
+		it("restores siblings when toggling off maximize", function()
+			termite.create()
+			termite.create()
+			termite.create()
+
+			termite.toggle_maximize()
+			assert.are.equal(3, state.maximized_idx)
+			-- Only one terminal window should be valid
+			local visible_count = 0
+			for _, term in ipairs(state.terminals) do
+				if term.win and vim.api.nvim_win_is_valid(term.win) then
+					visible_count = visible_count + 1
+				end
+			end
+			assert.are.equal(1, visible_count)
+
+			termite.toggle_maximize() -- Restore
+			assert.are.equal(nil, state.maximized_idx)
+			-- All terminals should be visible again
+			visible_count = 0
+			for _, term in ipairs(state.terminals) do
+				if term.win and vim.api.nvim_win_is_valid(term.win) then
+					visible_count = visible_count + 1
+				end
+			end
+			assert.are.equal(3, visible_count)
+		end)
+	end)
 end)
 
 -- vim: foldmethod=marker:foldmarker={{{,}}}:foldlevel=0
