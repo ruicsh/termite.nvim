@@ -9,4 +9,5 @@ max_line_length = false
 -- Test files also use busted globals (describe, it, assert, etc.)
 files["spec/**/*.lua"] = {
 	std = "+busted",
+	self = false,
 }

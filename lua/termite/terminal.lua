@@ -132,7 +132,7 @@ M.create = function(opts)
 			height = opts.height,
 			anchor = "NW",
 			style = "minimal",
-			border = "none",
+			border = opts.border or "none",
 			zindex = 50,
 		}
 	else

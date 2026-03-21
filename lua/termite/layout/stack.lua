@@ -2,6 +2,7 @@
 -- Window geometry: positioning, sizing, and reflow for stack layout.
 
 local config = require("termite.config")
+local constants = require("termite.constants")
 local highlights = require("termite.highlights")
 local state = require("termite.state")
 
@@ -24,16 +25,16 @@ M.build_highlighted_border = function(border, position, hl_type)
 	local outer_indices = {}
 	if position == "left" then
 		-- Right edge only (not corners)
-		outer_indices = { [4] = true }
+		outer_indices = { [constants.BORDER_RIGHT] = true }
 	elseif position == "right" then
 		-- Left edge only (not corners)
-		outer_indices = { [8] = true }
+		outer_indices = { [constants.BORDER_LEFT] = true }
 	elseif position == "top" then
 		-- Bottom edge only (not corners)
-		outer_indices = { [6] = true }
+		outer_indices = { [constants.BORDER_BOTTOM] = true }
 	elseif position == "bottom" then
 		-- Top edge only (not corners)
-		outer_indices = { [2] = true }
+		outer_indices = { [constants.BORDER_TOP] = true }
 	end
 
 	-- Convert all border elements to tuples with appropriate highlights
