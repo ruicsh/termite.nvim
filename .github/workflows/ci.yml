@@ -40,10 +40,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Neovim
-        uses: rhymond/setup-neovim@v1
+      - name: Install Neovim (stable)
+        uses: rhysd/action-setup-vim@v1
         with:
-          neovim-version: stable
+          neovim: true
+          version: stable
       - name: Clone plenary.nvim
         uses: actions/checkout@v4
         with:
