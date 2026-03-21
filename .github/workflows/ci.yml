@@ -51,5 +51,4 @@ jobs:
           repository: nvim-lua/plenary.nvim
           path: vendor/plenary.nvim
       - name: Run tests
-        run: |
-          nvim --headless -c "let &rtp .= ',' . getcwd() . '/vendor/plenary.nvim'" -c "PlenaryBustedDirectory spec/ {minimal_init = 'spec/minimal_init.vim'}"
+        run: make test
