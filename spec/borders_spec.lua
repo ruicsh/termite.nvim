@@ -56,6 +56,7 @@ describe("borders module", function()
 				"vertical_right",
 				"horizontal_down",
 				"horizontal_up",
+				"cross",
 			}
 			for style, chars in pairs(borders) do
 				for _, key in ipairs(required_keys) do

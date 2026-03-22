@@ -491,7 +491,7 @@ describe("layout.tmux module", function()
 			assert.are.equal("editor", cfg.relative)
 			assert.are.equal("NW", cfg.anchor)
 			assert.are.equal("minimal", cfg.style)
-			assert.are.equal("none", cfg.border)
+			assert.are.equal("table", type(cfg.border))
 			assert.are.equal(50, cfg.zindex)
 		end)
 
@@ -617,10 +617,22 @@ describe("layout.tmux module", function()
 	end)
 
 	describe("update_border_highlight()", function()
-		it("is a no-op function", function()
-			-- Should not error when called
-			tmux.update_border_highlight({}, "active")
-			tmux.update_border_highlight(nil, nil)
+		before_each(function()
+			setup_vim_mock(100, 50, 1, 2, 1)
+		end)
+
+		it("returns early when window is nil or invalid", function()
+			-- Should not error with nil window
+			tmux.update_border_highlight({ win = nil }, "active")
+		end)
+
+		it("returns early when pane_tree is nil", function()
+			-- Should not error when pane_tree is nil
+			local term = { win = 1, term_id = 1 }
+			vim.api.nvim_win_is_valid = function(_winid)
+				return true
+			end
+			tmux.update_border_highlight(term, "active")
 		end)
 	end)
 
@@ -800,6 +812,241 @@ describe("layout.tmux module", function()
 			-- Should have 5 terminals
 			assert.are.equal(5, #state.terminals)
 			assert.are.equal(6, state.next_term_id)
+		end)
+	end)
+
+	describe("build_pane_border() T-junction corners", function()
+		local constants
+
+		before_each(function()
+			setup_vim_mock(100, 50, 1, 2, 1)
+			-- Note: config is already set to position="right" by parent before_each
+			-- Tests that need different position will set it themselves
+			constants = require("termite.constants")
+			tmux.create_root()
+		end)
+
+		it("uses horizontal_down for top-right corner when pane above spans wider", function()
+			-- Create: Term1 on top (full width), Term2 below left, Term3 below right
+			-- First split root horizontally to create top/bottom
+			tmux.split(1, "down") -- Now: Term1 (top), Term2 (bottom)
+			-- Split Term2 vertically to create left/right
+			tmux.split(2, "right") -- Now: Term1 (top), Term2 (bottom-left), Term3 (bottom-right)
+
+			-- Get geometries
+			local geoms = tmux._test.get_leaf_geometries(state.pane_tree, tmux._test.get_editor_rect())
+
+			-- Build border for Term2 (bottom-left pane)
+			local root_rect = tmux._test.get_editor_rect()
+			local border = tmux._test.build_pane_border(geoms[2], root_rect, "right", geoms)
+
+			-- Term2's top-right corner should be horizontal_down (┬), not cross (┼)
+			-- because Term1 spans above it and continues past its right edge
+			assert.are.equal("┬", border[constants.BORDER_TOP_RIGHT])
+		end)
+
+		it("uses horizontal_down for top-left corner when pane above spans wider", function()
+			-- Create: Term1 on top (full width), Term3 below left, Term2 below right
+			tmux.split(1, "down") -- Term1 (top), Term2 (bottom)
+			tmux.split(2, "left") -- Split Term2: Term3 (bottom-left), Term2 (bottom-right)
+
+			local geoms = tmux._test.get_leaf_geometries(state.pane_tree, tmux._test.get_editor_rect())
+			local root_rect = tmux._test.get_editor_rect()
+			local border = tmux._test.build_pane_border(geoms[2], root_rect, "right", geoms)
+
+			-- Term2's top-left corner should be horizontal_down (┬), not cross (┼)
+			-- because Term1 spans above it and continues past its left edge
+			assert.are.equal("┬", border[constants.BORDER_TOP_LEFT])
+		end)
+
+		it("uses horizontal_up for bottom-right corner when pane below spans wider", function()
+			-- Create layout: Term1 (top-left), Term2 (top-right), Term3 below both
+			tmux.split(1, "down") -- Term1 (top), Term3 (bottom)
+			tmux.split(1, "right") -- Split Term1: Term1 (top-left), Term2 (top-right)
+
+			local geoms = tmux._test.get_leaf_geometries(state.pane_tree, tmux._test.get_editor_rect())
+			local root_rect = tmux._test.get_editor_rect()
+			local border = tmux._test.build_pane_border(geoms[1], root_rect, "right", geoms)
+
+			-- Term1's bottom-right corner should be horizontal_up (┴), not cross (┼)
+			-- because Term3 spans below it and continues past its right edge
+			assert.are.equal("┴", border[constants.BORDER_BOTTOM_RIGHT])
+		end)
+
+		it("uses horizontal_up for bottom-left corner when pane below spans wider", function()
+			-- Create layout: Term1 (top-right), Term2 (top-left), Term3 below both
+			tmux.split(1, "down") -- Term1 (top), Term3 (bottom)
+			tmux.split(1, "left") -- Split Term1: Term2 (top-left), Term1 (top-right)
+
+			local geoms = tmux._test.get_leaf_geometries(state.pane_tree, tmux._test.get_editor_rect())
+			local root_rect = tmux._test.get_editor_rect()
+			local border = tmux._test.build_pane_border(geoms[1], root_rect, "right", geoms)
+
+			-- Term1's bottom-left corner should be horizontal_up (┴), not cross (┼)
+			assert.are.equal("┴", border[constants.BORDER_BOTTOM_LEFT])
+		end)
+
+		it("uses cross for inner corners when no spanning neighbor", function()
+			-- Simple 2x2 grid where no pane spans past corners
+			tmux.split(1, "right") -- Term1 (left), Term2 (right)
+			tmux.split(1, "down") -- Split Term1: Term1 (top-left), Term3 (bottom-left)
+			tmux.split(2, "down") -- Split Term2: Term2 (top-right), Term4 (bottom-right)
+
+			local geoms = tmux._test.get_leaf_geometries(state.pane_tree, tmux._test.get_editor_rect())
+			local root_rect = tmux._test.get_editor_rect()
+			local border = tmux._test.build_pane_border(geoms[1], root_rect, "right", geoms)
+
+			-- Term1's corners: top-left is outer, top-right borders Term2
+			-- No T-junctions in this layout since nothing spans full width
+			assert.are.equal("┼", border[constants.BORDER_BOTTOM_RIGHT])
+		end)
+
+		it("handles T-junction when pane above spans wider", function()
+			-- Layout: Term1 spans full width above, Term2 is narrower below
+			-- Use position="bottom" to avoid outer edge interference
+			config.setup({ layout = "tmux", position = "bottom", width = 0.5, height = 0.5 })
+			state.pane_tree = nil
+			state.terminals = {}
+			state.next_term_id = 1
+			tmux.create_root()
+
+			-- Create: Term1 on top (full width), Term2 below left, Term3 below right
+			tmux.split(1, "down") -- Term1 (top), Term2 (bottom)
+			tmux.split(2, "right") -- Split bottom: Term2 (bottom-left), Term3 (bottom-right)
+
+			local geoms = tmux._test.get_leaf_geometries(state.pane_tree, tmux._test.get_editor_rect())
+			local root_rect = tmux._test.get_editor_rect()
+
+			-- Term2 has Term1 spanning above it (full width)
+			-- Term1: col=0, width=100 (spans full width)
+			-- Term2: col=0, width=50
+			-- So Term1 extends past Term2's right edge -> T-junction
+			local border2 = tmux._test.build_pane_border(geoms[2], root_rect, "bottom", geoms)
+			assert.are.equal("┬", border2[constants.BORDER_TOP_RIGHT])
+
+			-- Term3 also has Term1 spanning above it
+			-- Term3: col=50, width=50
+			-- Term1 extends past Term3's left edge (col=0 < col=50) -> T-junction
+			local border3 = tmux._test.build_pane_border(geoms[3], root_rect, "bottom", geoms)
+			assert.are.equal("┬", border3[constants.BORDER_TOP_LEFT])
+		end)
+
+		it("handles T-junction when pane below spans wider", function()
+			-- Layout: Term1 is narrower on top, Term2 spans full width below
+			config.setup({ layout = "tmux", position = "bottom", width = 0.5, height = 0.5 })
+			state.pane_tree = nil
+			state.terminals = {}
+			state.next_term_id = 1
+			tmux.create_root()
+
+			-- Create: Term1 top left, Term2 top right, Term3 below (full width)
+			tmux.split(1, "down") -- Term1 (top), Term3 (bottom)
+			tmux.split(1, "right") -- Split top: Term1 (top-left), Term2 (top-right)
+
+			local geoms = tmux._test.get_leaf_geometries(state.pane_tree, tmux._test.get_editor_rect())
+			local root_rect = tmux._test.get_editor_rect()
+
+			-- Term1 has Term3 spanning below it (full width)
+			-- Term1: col=0, width=50 -> right edge at 50
+			-- Term3: col=0, width=100 -> extends to 100
+			-- So Term3 extends past Term1's right edge -> T-junction (┴)
+			local border1 = tmux._test.build_pane_border(geoms[1], root_rect, "bottom", geoms)
+			assert.are.equal("┴", border1[constants.BORDER_BOTTOM_RIGHT])
+
+			-- Term3 (top-right) also has Term2 (bottom) spanning below it
+			-- Term3: col=50, width=50 -> left edge at 50
+			-- Term2: col=0 -> extends left of Term3's left edge -> T-junction (┴)
+			local border3 = tmux._test.build_pane_border(geoms[3], root_rect, "bottom", geoms)
+			assert.are.equal("┴", border3[constants.BORDER_BOTTOM_LEFT])
+		end)
+
+		it("correctly identifies cross at intersection of four equal panes", function()
+			-- 2x2 grid - all corners at the center should be cross
+			-- Note: With position="right", outer_left is set for panes at root_rect.col
+			-- So we test with position="bottom" to get cleaner inner corner detection
+			config.setup({ layout = "tmux", position = "bottom", width = 0.5, height = 0.5 })
+			state.pane_tree = nil
+			state.terminals = {}
+			state.next_term_id = 1
+			tmux.create_root()
+
+			tmux.split(1, "right") -- Term1 (left), Term2 (right)
+			tmux.split(1, "down") -- Split Term1: Term1 (top-left), Term3 (bottom-left)
+			tmux.split(2, "down") -- Split Term2: Term2 (top-right), Term4 (bottom-right)
+
+			local geoms = tmux._test.get_leaf_geometries(state.pane_tree, tmux._test.get_editor_rect())
+			local root_rect = tmux._test.get_editor_rect()
+
+			local border1 = tmux._test.build_pane_border(geoms[1], root_rect, "bottom", geoms)
+			local border2 = tmux._test.build_pane_border(geoms[2], root_rect, "bottom", geoms)
+			local border3 = tmux._test.build_pane_border(geoms[3], root_rect, "bottom", geoms)
+			local border4 = tmux._test.build_pane_border(geoms[4], root_rect, "bottom", geoms)
+
+			-- All corners at the center intersection should be cross
+			assert.are.equal("┼", border1[constants.BORDER_BOTTOM_RIGHT])
+			assert.are.equal("┼", border2[constants.BORDER_BOTTOM_LEFT])
+			assert.are.equal("┼", border3[constants.BORDER_TOP_RIGHT])
+			assert.are.equal("┼", border4[constants.BORDER_TOP_LEFT])
+		end)
+
+		it("handles single pane with no neighbors", function()
+			-- Just the root pane - no splits
+			local geoms = tmux._test.get_leaf_geometries(state.pane_tree, tmux._test.get_editor_rect())
+			local root_rect = tmux._test.get_editor_rect()
+			local border = tmux._test.build_pane_border(geoms[1], root_rect, "right", geoms)
+
+			-- Single pane should have no corners set (only outer edges)
+			assert.are.equal("", border[constants.BORDER_TOP_LEFT])
+			assert.are.equal("", border[constants.BORDER_TOP_RIGHT])
+			assert.are.equal("", border[constants.BORDER_BOTTOM_LEFT])
+			assert.are.equal("", border[constants.BORDER_BOTTOM_RIGHT])
+		end)
+
+		it("handles two vertical panes with no T-junctions", function()
+			-- Simple vertical split - no horizontal edges means no corners
+			tmux.split(1, "right") -- Term1 (left), Term2 (right)
+
+			local geoms = tmux._test.get_leaf_geometries(state.pane_tree, tmux._test.get_editor_rect())
+			local root_rect = tmux._test.get_editor_rect()
+
+			local border1 = tmux._test.build_pane_border(geoms[1], root_rect, "right", geoms)
+			local border2 = tmux._test.build_pane_border(geoms[2], root_rect, "right", geoms)
+
+			-- No corners for vertical-only split
+			assert.are.equal("", border1[constants.BORDER_TOP_LEFT])
+			assert.are.equal("", border1[constants.BORDER_TOP_RIGHT])
+			assert.are.equal("", border2[constants.BORDER_TOP_LEFT])
+			assert.are.equal("", border2[constants.BORDER_TOP_RIGHT])
+		end)
+
+		it("handles two horizontal panes with no vertical edges", function()
+			-- Simple horizontal split - with position="bottom", outer_top is set
+			-- so top edge only, no vertical edges means no corners
+			config.setup({ layout = "tmux", position = "bottom", width = 0.5, height = 0.5 })
+			state.pane_tree = nil
+			state.terminals = {}
+			state.next_term_id = 1
+			tmux.create_root()
+
+			tmux.split(1, "down") -- Term1 (top), Term2 (bottom)
+
+			local geoms = tmux._test.get_leaf_geometries(state.pane_tree, tmux._test.get_editor_rect())
+			local root_rect = tmux._test.get_editor_rect()
+
+			local border1 = tmux._test.build_pane_border(geoms[1], root_rect, "bottom", geoms)
+			local border2 = tmux._test.build_pane_border(geoms[2], root_rect, "bottom", geoms)
+
+			-- Top pane: no left/right edges, only bottom edge
+			assert.are.equal("", border1[constants.BORDER_TOP_LEFT])
+			assert.are.equal("", border1[constants.BORDER_TOP_RIGHT])
+			assert.are.equal("", border1[constants.BORDER_BOTTOM_LEFT])
+			assert.are.equal("", border1[constants.BORDER_BOTTOM_RIGHT])
+
+			-- Bottom pane: outer_top edge only
+			assert.are.equal("", border2[constants.BORDER_TOP_LEFT])
+			assert.are.equal("", border2[constants.BORDER_TOP_RIGHT])
+			assert.are.equal("", border2[constants.BORDER_BOTTOM_LEFT])
+			assert.are.equal("", border2[constants.BORDER_BOTTOM_RIGHT])
 		end)
 	end)
 end)

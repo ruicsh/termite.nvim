@@ -2,6 +2,7 @@
 -- Window geometry: positioning, sizing, and reflow for tmux layout.
 
 local config = require("termite.config")
+local constants = require("termite.constants")
 local state = require("termite.state")
 local terminal = require("termite.terminal")
 
@@ -50,6 +51,183 @@ local function get_editor_rect()
 	end
 
 	return { row = root_row, col = root_col, width = root_width, height = root_height }
+end
+
+-- Build border array for a pane based on its geometry and root position.
+-- Uses all_geometries to detect neighbors and determine which inner edges to draw.
+-- Border ownership rule: each pane draws its right and bottom edges.
+-- Returns border array with all edges that should be visible.
+local function build_pane_border(geom, root_rect, position, all_geometries)
+	local chars = config.get_border_chars()
+
+	-- Determine which edge is the outer edge based on position.
+	-- This is the edge that faces the editor.
+	local outer_left, outer_right, outer_top, outer_bottom = false, false, false, false
+
+	if position == "right" then
+		outer_left = geom.col == root_rect.col
+	elseif position == "left" then
+		outer_right = geom.col + geom.width == root_rect.col + root_rect.width
+	elseif position == "top" then
+		outer_bottom = geom.row + geom.height == root_rect.row + root_rect.height
+	else -- bottom
+		outer_top = geom.row == root_rect.row
+	end
+
+	-- Determine which inner edges exist.
+	-- Inner edges are shared boundaries with other panes.
+	-- Each pane draws all edges that border another pane (or the outer edge).
+	local inner_left, inner_right, inner_top, inner_bottom = false, false, false, false
+
+	-- Track the specific neighbors found for T-junction detection (above/below only)
+	local neighbor_above, neighbor_below = nil, nil
+
+	if all_geometries then
+		local row_start, row_end = geom.row, geom.row + geom.height
+		local col_start, col_end = geom.col, geom.col + geom.width
+
+		-- Check for pane directly to the LEFT (other pane's right edge matches this left edge)
+		for _, other_geom in pairs(all_geometries) do
+			if other_geom.col + other_geom.width == geom.col then
+				local other_row_start, other_row_end = other_geom.row, other_geom.row + other_geom.height
+				if other_row_start < row_end and other_row_end > row_start then
+					inner_left = true
+					break
+				end
+			end
+		end
+
+		-- Check for pane directly to the RIGHT (other pane's left edge matches this right edge)
+		local right_edge = geom.col + geom.width
+		for _, other_geom in pairs(all_geometries) do
+			if other_geom.col == right_edge then
+				local other_row_start, other_row_end = other_geom.row, other_geom.row + other_geom.height
+				if other_row_start < row_end and other_row_end > row_start then
+					inner_right = true
+					break
+				end
+			end
+		end
+
+		-- Check for pane directly ABOVE (other pane's bottom edge matches this top edge)
+		for _, other_geom in pairs(all_geometries) do
+			if other_geom.row + other_geom.height == geom.row then
+				local other_col_start, other_col_end = other_geom.col, other_geom.col + other_geom.width
+				if other_col_start < col_end and other_col_end > col_start then
+					inner_top = true
+					neighbor_above = other_geom
+					break
+				end
+			end
+		end
+
+		-- Check for pane directly BELOW (other pane's top edge matches this bottom edge)
+		local bottom_edge = geom.row + geom.height
+		for _, other_geom in pairs(all_geometries) do
+			if other_geom.row == bottom_edge then
+				local other_col_start, other_col_end = other_geom.col, other_geom.col + other_geom.width
+				if other_col_start < col_end and other_col_end > col_start then
+					inner_bottom = true
+					neighbor_below = other_geom
+					break
+				end
+			end
+		end
+	end
+
+	-- Build border array: {top-left, top, top-right, right, bottom-right, bottom, bottom-left, left}
+	local border = { "", "", "", "", "", "", "", "" }
+
+	-- Draw all edges (outer or inner)
+	if outer_left or inner_left then
+		border[constants.BORDER_LEFT] = chars.vertical
+	end
+	if outer_right or inner_right then
+		border[constants.BORDER_RIGHT] = chars.vertical
+	end
+	if outer_top or inner_top then
+		border[constants.BORDER_TOP] = chars.horizontal
+	end
+	if outer_bottom or inner_bottom then
+		border[constants.BORDER_BOTTOM] = chars.horizontal
+	end
+
+	-- Corner handling - determine correct junction character based on which edges exist
+	-- For inner+inner corners, check if the corner neighbor extends past (T-junction) or not (cross)
+
+	-- top-left corner
+	if (outer_top or inner_top) and (outer_left or inner_left) then
+		if outer_top and outer_left then
+			border[constants.BORDER_TOP_LEFT] = chars.top_left
+		elseif outer_top and inner_left then
+			border[constants.BORDER_TOP_LEFT] = chars.horizontal_down
+		elseif inner_top and outer_left then
+			border[constants.BORDER_TOP_LEFT] = chars.vertical_left
+		elseif inner_top and inner_left then
+			-- Both inner edges: check if neighbor above extends past left edge
+			if neighbor_above and neighbor_above.col < geom.col then
+				border[constants.BORDER_TOP_LEFT] = chars.horizontal_down
+			else
+				border[constants.BORDER_TOP_LEFT] = chars.cross
+			end
+		end
+	end
+
+	-- top-right corner
+	if (outer_top or inner_top) and (outer_right or inner_right) then
+		if outer_top and outer_right then
+			border[constants.BORDER_TOP_RIGHT] = chars.top_right
+		elseif outer_top and inner_right then
+			border[constants.BORDER_TOP_RIGHT] = chars.horizontal_down
+		elseif inner_top and outer_right then
+			border[constants.BORDER_TOP_RIGHT] = chars.vertical_right
+		elseif inner_top and inner_right then
+			-- Both inner edges: check if neighbor above extends past right edge
+			if neighbor_above and (neighbor_above.col + neighbor_above.width) > (geom.col + geom.width) then
+				border[constants.BORDER_TOP_RIGHT] = chars.horizontal_down
+			else
+				border[constants.BORDER_TOP_RIGHT] = chars.cross
+			end
+		end
+	end
+
+	-- bottom-left corner
+	if (outer_bottom or inner_bottom) and (outer_left or inner_left) then
+		if outer_bottom and outer_left then
+			border[constants.BORDER_BOTTOM_LEFT] = chars.bottom_left
+		elseif outer_bottom and inner_left then
+			border[constants.BORDER_BOTTOM_LEFT] = chars.horizontal_up
+		elseif inner_bottom and outer_left then
+			border[constants.BORDER_BOTTOM_LEFT] = chars.vertical_left
+		elseif inner_bottom and inner_left then
+			-- Both inner edges: check if neighbor below extends past left edge
+			if neighbor_below and neighbor_below.col < geom.col then
+				border[constants.BORDER_BOTTOM_LEFT] = chars.horizontal_up
+			else
+				border[constants.BORDER_BOTTOM_LEFT] = chars.cross
+			end
+		end
+	end
+
+	-- bottom-right corner
+	if (outer_bottom or inner_bottom) and (outer_right or inner_right) then
+		if outer_bottom and outer_right then
+			border[constants.BORDER_BOTTOM_RIGHT] = chars.bottom_right
+		elseif outer_bottom and inner_right then
+			border[constants.BORDER_BOTTOM_RIGHT] = chars.horizontal_up
+		elseif inner_bottom and outer_right then
+			border[constants.BORDER_BOTTOM_RIGHT] = chars.vertical_right
+		elseif inner_bottom and inner_right then
+			-- Both inner edges: check if neighbor below extends past right edge
+			if neighbor_below and (neighbor_below.col + neighbor_below.width) > (geom.col + geom.width) then
+				border[constants.BORDER_BOTTOM_RIGHT] = chars.horizontal_up
+			else
+				border[constants.BORDER_BOTTOM_RIGHT] = chars.cross
+			end
+		end
+	end
+
+	return border
 end
 
 -- }}}}
@@ -130,12 +308,17 @@ M.create_root = function()
 
 	-- Create terminal with full root geometry.
 	local root_rect = get_editor_rect()
+	local position = config.values.position
+	local root_geoms = { [term_id] = root_rect }
+	local border = build_pane_border(root_rect, root_rect, position, root_geoms)
+
 	local term = terminal.create({
 		term_id = term_id,
 		row = root_rect.row,
 		col = root_rect.col,
 		width = root_rect.width,
 		height = root_rect.height,
+		border = border,
 	})
 	term.term_id = term_id
 
@@ -187,7 +370,7 @@ M.split = function(term_id, direction)
 	if not parent then
 		-- This is the root node.
 		state.pane_tree = split_node
-	else
+	elseif idx then
 		parent.children[idx] = split_node
 	end
 
@@ -276,7 +459,7 @@ M.remove = function(term_id)
 	if not grandparent then
 		-- Split node is root.
 		state.pane_tree = sibling
-	else
+	elseif split_idx then
 		grandparent.children[split_idx] = sibling
 	end
 
@@ -463,13 +646,17 @@ M.get_win_config = function(term_id)
 		return nil
 	end
 
-	local leaf_geoms = get_leaf_geometries(state.pane_tree, get_editor_rect())
+	local root_rect = get_editor_rect()
+	local leaf_geoms = get_leaf_geometries(state.pane_tree, root_rect)
 	local geom = leaf_geoms[term_id]
 	if not geom then
 		return nil
 	end
 
-	return {
+	local position = config.values.position
+	local border = build_pane_border(geom, root_rect, position, leaf_geoms)
+
+	local win_config = {
 		relative = "editor",
 		row = geom.row,
 		col = geom.col,
@@ -477,9 +664,10 @@ M.get_win_config = function(term_id)
 		height = geom.height,
 		anchor = "NW",
 		style = "minimal",
-		border = "none",
+		border = border or "none",
 		zindex = 50,
 	}
+	return win_config
 end
 
 -- Apply window config to a terminal.
@@ -510,7 +698,10 @@ end
 
 -- Reflow all visible terminals.
 M.reflow = function()
-	if not state.pane_tree or state.maximized_term_id then
+	if not state.pane_tree then
+		return
+	end
+	if state.maximized_term_id then
 		return
 	end
 
@@ -527,9 +718,47 @@ M.reflow = function()
 	end
 end
 
--- Update border highlight (no-op for tmux layout since no borders).
-M.update_border_highlight = function(_term, _hl_type)
-	-- Tmux layout has no borders.
+-- Update border highlight for tmux layout.
+-- Applies the single border highlight to outer edge borders.
+---@diagnostic disable-next-line: unused-local
+M.update_border_highlight = function(term, _hl_type)
+	if not term.win or not vim.api.nvim_win_is_valid(term.win) then
+		return
+	end
+
+	if not state.pane_tree or state.maximized_term_id then
+		return
+	end
+
+	local highlights = require("termite.highlights")
+	local hl_single = highlights.resolve_hl(config.values.highlights.border_single, highlights.BORDER_SINGLE)
+
+	local root_rect = get_editor_rect()
+	local leaf_geoms = get_leaf_geometries(state.pane_tree, root_rect)
+	local geom = leaf_geoms[term.term_id]
+	if not geom then
+		return
+	end
+
+	local position = config.values.position
+	local border = build_pane_border(geom, root_rect, position, leaf_geoms)
+	if not border then
+		return
+	end
+
+	-- Apply highlight to all border characters
+	local highlighted_border = {}
+	for i, char in ipairs(border) do
+		if char and char ~= "" then
+			highlighted_border[i] = { char, hl_single }
+		else
+			highlighted_border[i] = char
+		end
+	end
+
+	vim.api.nvim_win_set_config(term.win, {
+		border = highlighted_border,
+	})
 end
 
 -- }}}}
@@ -578,6 +807,17 @@ M.toggle_maximize = function(term_id)
 end
 
 -- }}}}
+
+-- Test exports {{{
+
+M._test = {
+	build_pane_border = build_pane_border,
+	get_editor_rect = get_editor_rect,
+	get_leaf_geometries = get_leaf_geometries,
+	find_leaf = find_leaf,
+}
+
+-- }}}
 
 return M
 
