@@ -163,7 +163,7 @@ M.get_win_config = function(index, total)
 		col = col,
 		height = height,
 		relative = "editor",
-		row = position == "top" and 0 or editor_height,
+		row = position == "top" and 0 or (editor_height + (vim.o.laststatus > 0 and 1 or 0)),
 		style = "minimal",
 		width = width,
 		zindex = 50,
