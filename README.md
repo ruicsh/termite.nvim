@@ -42,7 +42,7 @@ require("termite").setup({
   position = "right",    -- Panel position: "left", "right", "top", or "bottom"
   border = "light",      -- Border style: "light", "heavy", "double", "double-dash", "triple-dash", "quadruple-dash"
   shell = nil,           -- Shell command (nil = default $SHELL)
-  start_insert = true,   -- Enter insert mode when focusing a terminal
+  start_insert = true,   -- Enter insert mode when focusing or clicking a terminal
   winbar = true,         -- Show winbar with running process or cwd
 
   keymaps = {
@@ -159,23 +159,24 @@ require("termite").setup({
 
 Default keymaps:
 
-| Mode     | Key     | Action                                |
-| -------- | ------- | ------------------------------------- |
-| Terminal | `<C-\>` | Toggle all terminals (smart: focus back) |
-| Terminal | `<C-t>` | Create new terminal                   |
-| Terminal | `<C-n>` | Focus next terminal                   |
-| Terminal | `<C-p>` | Focus previous terminal               |
-| Terminal | `<C-e>` | Focus editor window                   |
-| Terminal | `<C-[>` | Exit to normal mode                   |
-| Terminal | `<C-z>` | Maximize/restore terminal             |
-| Normal   | `q`     | Close current terminal                |
+| Mode     | Key             | Action                                   |
+| -------- | --------------- | ---------------------------------------- | -------------------------- |
+| Terminal | `<C-\>`         | Toggle all terminals (smart: focus back) |
+| Terminal | `<C-t>`         | Create new terminal                      |
+| Terminal | `<C-n>`         | Focus next terminal                      |
+| Terminal | `<C-p>`         | Focus previous terminal                  |
+| Terminal | `<C-e>`         | Focus editor window                      |
+| Terminal | `<C-[>`         | Exit to normal mode                      |
+| Terminal | `<C-z>`         | Maximize/restore terminal                |
+| Normal   | `q`             | Close current terminal                   |
+| Normal   | `<LeftRelease>` | Enter insert mode on click               | (when start_insert = true) |
 
 Additionally, `toggle` and `create` keymaps are available in normal mode globally:
 
-| Mode   | Key     | Action                                |
-| ------ | ------- | ------------------------------------- |
+| Mode   | Key     | Action                                   |
+| ------ | ------- | ---------------------------------------- |
 | Normal | `<C-\>` | Toggle all terminals (smart: focus back) |
-| Normal | `<C-t>` | Create new terminal                   |
+| Normal | `<C-t>` | Create new terminal                      |
 
 **Smart toggle behavior:** When terminals are visible and you press `<C-\>` while focus is on the editor, it focuses the terminals instead of hiding them. This lets you switch between editor and terminals with the same key.
 
