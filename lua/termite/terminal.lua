@@ -66,6 +66,11 @@ M.setup_keymaps = function(bufnr)
 	map("n", km.close, function()
 		termite.close_current()
 	end, "Close")
+
+	-- Enter insert mode when clicking in terminal window.
+	if opts.start_insert then
+		vim.keymap.set("n", "<LeftRelease>", "<LeftRelease>i", { buffer = bufnr, desc = "Termite: Insert on click" })
+	end
 end
 
 -- Create a new terminal. Opens a float window, starts a shell, sets up keymaps and
