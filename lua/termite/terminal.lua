@@ -68,7 +68,7 @@ M.setup_keymaps = function(bufnr)
 	end, "Close")
 
 	-- Enter insert mode when clicking in terminal window.
-	if opts.start_insert then
+	if opts.click_to_insert then
 		vim.keymap.set("n", "<LeftRelease>", "<LeftRelease>i", { buffer = bufnr, desc = "Termite: Insert on click" })
 	end
 end

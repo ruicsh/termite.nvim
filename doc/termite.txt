@@ -68,7 +68,8 @@ Default configuration:
     position = "right",    -- Panel position: "left", "right", "top", or "bottom"
     border = "light",      -- Border style name (see |termite-config-border|)
     shell = nil,           -- Shell command (nil = $SHELL)
-    start_insert = true,   -- Enter insert mode when focusing or clicking terminal
+    start_insert = true,   -- Enter insert mode when focusing terminal
+    click_to_insert = true, -- Enter insert mode when clicking terminal window
     winbar = true,         -- Show winbar with running process or cwd
 
     keymaps = {
@@ -125,8 +126,13 @@ shell (string|nil)
 
 *termite-config-start_insert*
 start_insert (boolean)
-  Whether to automatically enter insert mode when focusing or clicking
-  a terminal.
+  Whether to automatically enter insert mode when focusing a terminal.
+  Default: true
+
+*termite-config-click_to_insert*
+click_to_insert (boolean)
+  Whether to automatically enter insert mode when clicking a terminal
+  window.
   Default: true
 
 *termite-config-winbar*
@@ -214,7 +220,7 @@ Default keymaps:
 
   Normal Mode (within terminal):
     q              Close current terminal
-    <LeftRelease>  Enter insert mode on click (when start_insert = true)
+    <LeftRelease>  Enter insert mode on click (when click_to_insert = true)
 
   Normal Mode (global):
     <C-\>      Toggle all terminals (smart: focus back)
@@ -230,7 +236,7 @@ Default keymaps:
 
   Normal Mode (within terminal):
     q              Close current terminal
-    <LeftRelease>  Enter insert mode on click (when start_insert = true)
+    <LeftRelease>  Enter insert mode on click (when click_to_insert = true)
 
   Normal Mode (global):
     <C-\\>      Toggle all terminals

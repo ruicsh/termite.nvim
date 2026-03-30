@@ -16,6 +16,7 @@ describe("config module", function()
 			assert.are.equal("light", config.values.border)
 			assert.are.equal(nil, config.values.shell)
 			assert.are.equal(true, config.values.start_insert)
+			assert.are.equal(true, config.values.click_to_insert)
 			assert.are.equal(true, config.values.winbar)
 		end)
 

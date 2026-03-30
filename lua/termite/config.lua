@@ -12,6 +12,7 @@ local DEFAULTS = {
 	border = "light", -- Border style: "light", "heavy", "double", "double-dash", "triple-dash", "quadruple-dash".
 	shell = nil, -- Shell command (nil = default shell).
 	start_insert = true, -- Enter insert mode when focusing a terminal.
+	click_to_insert = true, -- Enter insert mode when clicking a terminal window.
 	winbar = true, -- Show winbar with cwd and running process.
 	keymaps = {
 		toggle = "<c-bslash>", -- Toggle all terminals (terminal mode).

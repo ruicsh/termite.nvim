@@ -42,7 +42,8 @@ require("termite").setup({
   position = "right",    -- Panel position: "left", "right", "top", or "bottom"
   border = "light",      -- Border style: "light", "heavy", "double", "double-dash", "triple-dash", "quadruple-dash"
   shell = nil,           -- Shell command (nil = default $SHELL)
-  start_insert = true,   -- Enter insert mode when focusing or clicking a terminal
+  start_insert = true,   -- Enter insert mode when focusing a terminal
+  click_to_insert = true, -- Enter insert mode when clicking a terminal window
   winbar = true,         -- Show winbar with running process or cwd
 
   keymaps = {
@@ -160,7 +161,7 @@ require("termite").setup({
 Default keymaps:
 
 | Mode     | Key             | Action                                   |
-| -------- | --------------- | ---------------------------------------- | -------------------------- |
+| -------- | --------------- | ---------------------------------------- | ----------------------------- |
 | Terminal | `<C-\>`         | Toggle all terminals (smart: focus back) |
 | Terminal | `<C-t>`         | Create new terminal                      |
 | Terminal | `<C-n>`         | Focus next terminal                      |
@@ -169,7 +170,7 @@ Default keymaps:
 | Terminal | `<C-[>`         | Exit to normal mode                      |
 | Terminal | `<C-z>`         | Maximize/restore terminal                |
 | Normal   | `q`             | Close current terminal                   |
-| Normal   | `<LeftRelease>` | Enter insert mode on click               | (when start_insert = true) |
+| Normal   | `<LeftRelease>` | Enter insert mode on click               | (when click_to_insert = true) |
 
 Additionally, `toggle` and `create` keymaps are available in normal mode globally:
 
