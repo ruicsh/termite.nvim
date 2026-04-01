@@ -281,8 +281,10 @@ describe("layout.stack module", function()
 
 				local win_config = layout.get_win_config(1, 1)
 				local editor_height = 50 - 1 - 1 -- 48
+				-- row accounts for status line: editor_height + 1 when laststatus > 0
+				local expected_row = editor_height + 1
 
-				assert.are.equal(editor_height, win_config.row)
+				assert.are.equal(expected_row, win_config.row)
 			end)
 
 			it("stacks terminals horizontally from left to right", function()
