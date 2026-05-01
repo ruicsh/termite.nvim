@@ -2,6 +2,8 @@ describe("layout.stack module", function()
 	local layout
 	local config
 	local highlights
+	local terminal
+	local state
 
 	local saved_columns, saved_lines, saved_cmdheight, saved_laststatus, saved_showtabline
 
@@ -18,6 +20,7 @@ describe("layout.stack module", function()
 		package.loaded["termite.highlights"] = nil
 		package.loaded["termite.layout"] = nil
 		package.loaded["termite.state"] = nil
+		package.loaded["termite.terminal"] = nil
 
 		-- Save original values
 		saved_columns = vim.o.columns
@@ -29,6 +32,8 @@ describe("layout.stack module", function()
 		config = require("termite.config")
 		highlights = require("termite.highlights")
 		layout = require("termite.layout")
+		terminal = require("termite.terminal")
+		state = require("termite.state")
 
 		-- Set default config for tests
 		config.setup({ position = "right", width = 0.5 })
@@ -41,6 +46,18 @@ describe("layout.stack module", function()
 		vim.o.cmdheight = saved_cmdheight
 		vim.o.laststatus = saved_laststatus
 		vim.o.showtabline = saved_showtabline
+
+		-- Clean up any remaining terminal windows and buffers
+		for _, term in ipairs(state.terminals) do
+			if term.win and vim.api.nvim_win_is_valid(term.win) then
+				vim.api.nvim_win_close(term.win, true)
+			end
+			if term.buf and vim.api.nvim_buf_is_valid(term.buf) then
+				vim.api.nvim_buf_delete(term.buf, { force = true })
+			end
+		end
+		state.terminals = {}
+		state.visible = false
 	end)
 
 	describe("get_win_config()", function()
@@ -401,6 +418,27 @@ describe("layout.stack module", function()
 				local result = layout.build_highlighted_border(border, "bottom", "active")
 
 				assert.are.equal("table", type(result[2]))
+			end)
+		end)
+	end)
+
+	describe("reflow()", function()
+		it("repositions visible terminals without error", function()
+			setup_vim_mock(100, 50, 1, 2, 1)
+
+			local term = terminal.create()
+			assert.is_true(vim.api.nvim_win_is_valid(term.win))
+
+			layout.reflow()
+
+			assert.is_true(vim.api.nvim_win_is_valid(term.win))
+		end)
+
+		it("does nothing when no terminals exist", function()
+			setup_vim_mock(100, 50, 1, 2, 1)
+
+			assert.has_no.errors(function()
+				layout.reflow()
 			end)
 		end)
 	end)

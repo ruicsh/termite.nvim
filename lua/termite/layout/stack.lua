@@ -3,6 +3,7 @@
 
 local config = require("termite.config")
 local highlights = require("termite.highlights")
+local state = require("termite.state")
 
 local M = {}
 
