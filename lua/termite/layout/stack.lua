@@ -7,6 +7,40 @@ local state = require("termite.state")
 
 local M = {}
 
+-- Build the base border array (without highlights) for a terminal at the given
+-- `index` in a stack of `total` terminals at the given `position`.
+local function build_border(index, total, position, chars)
+	if position == "left" or position == "right" then
+		if index < total then
+			if position == "left" then
+				return { "", "", chars.vertical, chars.vertical, chars.vertical_right, chars.horizontal, "", "" }
+			else
+				return { "", "", "", "", chars.horizontal, chars.horizontal, chars.vertical_left, chars.vertical }
+			end
+		else
+			if position == "left" then
+				return { "", "", chars.vertical, chars.vertical, " ", " ", "", "" }
+			else
+				return { "", "", "", "", " ", " ", " ", chars.vertical }
+			end
+		end
+	else
+		if index < total then
+			if position == "top" then
+				return { "", "", chars.vertical, chars.vertical, chars.horizontal_up, chars.horizontal, chars.horizontal, "" }
+			else
+				return { chars.horizontal, chars.horizontal, chars.horizontal_down, chars.vertical, "", "", "", "" }
+			end
+		else
+			if position == "top" then
+				return { "", "", "", "", chars.horizontal, chars.horizontal, chars.horizontal, "" }
+			else
+				return { chars.horizontal, chars.horizontal, chars.horizontal, "", "", "", "", "" }
+			end
+		end
+	end
+end
+
 -- Build a border array with highlight groups.
 -- border: the base border array (array of chars)
 -- position: "left", "right", "top", or "bottom"
@@ -92,22 +126,7 @@ M.get_win_config = function(index, total)
 			height = usable_height - (each_height * (total - 1))
 		end
 
-		-- Border configuration: vertical borders on left/right, horizontal border at bottom.
-		local border
-		if index < total then
-			if position == "left" then
-				border = { "", "", chars.vertical, chars.vertical, chars.vertical_right, chars.horizontal, "", "" }
-			else
-				border = { "", "", "", "", chars.horizontal, chars.horizontal, chars.vertical_left, chars.vertical }
-			end
-		else
-			-- Last terminal: no bottom border.
-			if position == "left" then
-				border = { "", "", chars.vertical, chars.vertical, " ", " ", "", "" }
-			else
-				border = { "", "", "", "", " ", " ", " ", chars.vertical }
-			end
-		end
+		local border = build_border(index, total, position, chars)
 
 		return {
 			anchor = position == "left" and "NW" or "NE",
@@ -140,22 +159,7 @@ M.get_win_config = function(index, total)
 		width = usable_width - (each_width * (total - 1))
 	end
 
-	-- Border configuration: horizontal borders on top/bottom, vertical border at right.
-	local border
-	if index < total then
-		if position == "top" then
-			border = { "", "", chars.vertical, chars.vertical, chars.horizontal_up, chars.horizontal, chars.horizontal, "" }
-		else
-			border = { chars.horizontal, chars.horizontal, chars.horizontal_down, chars.vertical, "", "", "", "" }
-		end
-	else
-		-- Last terminal: no right border.
-		if position == "top" then
-			border = { "", "", "", "", chars.horizontal, chars.horizontal, chars.horizontal, "" }
-		else
-			border = { chars.horizontal, chars.horizontal, chars.horizontal, "", "", "", "", "" }
-		end
-	end
+	local border = build_border(index, total, position, chars)
 
 	return {
 		anchor = position == "top" and "NW" or "SW",
@@ -204,12 +208,9 @@ M.update_border_highlight = function(term, is_active)
 		return
 	end
 
-	local opts = config.values
-	local position = opts.position
+	local position = config.values.position
 	local chars = config.get_border_chars()
 
-	-- Rebuild the base border (same logic as get_win_config)
-	local border
 	local total = #state.terminals
 	local index = nil
 	for i, t in ipairs(state.terminals) do
@@ -223,36 +224,7 @@ M.update_border_highlight = function(term, is_active)
 		return
 	end
 
-	-- Build the base border array
-	if position == "left" or position == "right" then
-		if index < total then
-			if position == "left" then
-				border = { "", "", chars.vertical, chars.vertical, chars.vertical_right, chars.horizontal, "", "" }
-			else
-				border = { "", "", "", "", chars.horizontal, chars.horizontal, chars.vertical_left, chars.vertical }
-			end
-		else
-			if position == "left" then
-				border = { "", "", chars.vertical, chars.vertical, " ", " ", "", "" }
-			else
-				border = { "", "", "", "", " ", " ", " ", chars.vertical }
-			end
-		end
-	else
-		if index < total then
-			if position == "top" then
-				border = { "", "", chars.vertical, chars.vertical, chars.horizontal_up, chars.horizontal, chars.horizontal, "" }
-			else
-				border = { chars.horizontal, chars.horizontal, chars.horizontal_down, chars.vertical, "", "", "", "" }
-			end
-		else
-			if position == "top" then
-				border = { "", "", "", "", chars.horizontal, chars.horizontal, chars.horizontal, "" }
-			else
-				border = { chars.horizontal, chars.horizontal, chars.horizontal, "", "", "", "", "" }
-			end
-		end
-	end
+	local border = build_border(index, total, position, chars)
 
 	-- Apply highlights to outer edge
 	local highlighted_border = M.build_highlighted_border(border, position, is_active)
