@@ -69,7 +69,7 @@ end
 -- Update border highlights for all terminals based on focus.
 local function update_border_highlights()
 	local current_win = vim.api.nvim_get_current_win()
-	for _, term in ipairs(state.terminals) do
+	for i, term in ipairs(state.terminals) do
 		if term.win and vim.api.nvim_win_is_valid(term.win) then
 			local hl_type
 			if #state.terminals == 1 then
@@ -79,7 +79,7 @@ local function update_border_highlights()
 			else
 				hl_type = "inactive"
 			end
-			layout.update_border_highlight(term, hl_type)
+			layout.update_border_highlight(term, i, #state.terminals, hl_type)
 		end
 	end
 end

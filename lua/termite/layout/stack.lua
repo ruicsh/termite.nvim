@@ -3,7 +3,6 @@
 
 local config = require("termite.config")
 local highlights = require("termite.highlights")
-local state = require("termite.state")
 
 local M = {}
 
@@ -203,7 +202,7 @@ end
 
 -- Update border highlights for a specific terminal based on active state.
 -- Updates the window config border with highlight groups and applies it.
-M.update_border_highlight = function(term, is_active)
+M.update_border_highlight = function(term, idx, total, is_active)
 	if not term.win or not vim.api.nvim_win_is_valid(term.win) then
 		return
 	end
@@ -211,20 +210,7 @@ M.update_border_highlight = function(term, is_active)
 	local position = config.values.position
 	local chars = config.get_border_chars()
 
-	local total = #state.terminals
-	local index = nil
-	for i, t in ipairs(state.terminals) do
-		if t == term then
-			index = i
-			break
-		end
-	end
-
-	if not index then
-		return
-	end
-
-	local border = build_border(index, total, position, chars)
+	local border = build_border(idx, total, position, chars)
 
 	-- Apply highlights to outer edge
 	local highlighted_border = M.build_highlighted_border(border, position, is_active)

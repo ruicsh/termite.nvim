@@ -47,10 +47,10 @@ vim.api.nvim_create_autocmd("WinEnter", {
 
 		if is_termite_terminal then
 			local current_win_id = vim.api.nvim_get_current_win()
-			for _, term in ipairs(state.terminals) do
+			for i, term in ipairs(state.terminals) do
 				if term.win and vim.api.nvim_win_is_valid(term.win) then
 					local is_active = term.win == current_win_id
-					layout.update_border_highlight(term, is_active)
+					layout.update_border_highlight(term, i, #state.terminals, is_active)
 				end
 			end
 		end
