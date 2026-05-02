@@ -4,6 +4,7 @@
 describe("plugin/termite", function()
 	local state
 	local config
+	local highlights
 
 	before_each(function()
 		-- Reset all modules for fresh state
@@ -15,6 +16,7 @@ describe("plugin/termite", function()
 		package.loaded["termite.init"] = nil
 
 		config = require("termite.config")
+		highlights = require("termite.highlights")
 		state = require("termite.state")
 		-- Load termite.init for side effects (sets up commands)
 		require("termite.init")
@@ -88,6 +90,104 @@ describe("plugin/termite", function()
 		it("WinEnter autocmd is registered", function()
 			local autocmds = vim.api.nvim_get_autocmds({ group = "termite/plugin", event = "WinEnter" })
 			assert.is_true(#autocmds > 0)
+		end)
+
+		describe("WinEnter border highlight fix", function()
+			local function spy_on_build_highlighted_border()
+				local layout_stack = require("termite.layout.stack")
+				local original = layout_stack.build_highlighted_border
+				local captured = {}
+				layout_stack.build_highlighted_border = function(border, position, hl_type)
+					table.insert(captured, hl_type)
+					return original(border, position, hl_type)
+				end
+				return captured, function()
+					layout_stack.build_highlighted_border = original
+				end
+			end
+
+			local function make_editor_win()
+				local buf = vim.api.nvim_create_buf(false, true)
+				return vim.api.nvim_open_win(buf, true, {
+					relative = "editor",
+					width = 10,
+					height = 10,
+					row = 0,
+					col = 0,
+				})
+			end
+
+			it("passes 'single' for the only terminal", function()
+				highlights.setup()
+				local terminal = require("termite.terminal")
+				local editor_win = make_editor_win()
+				local term = terminal.create()
+				assert.are.equal(1, #state.terminals)
+
+				-- Created terminal auto-enters. Switch to editor first to leave it,
+				-- so WinEnter fires again when we go back.
+				vim.api.nvim_set_current_win(editor_win)
+
+				local captured, restore = spy_on_build_highlighted_border()
+
+				vim.api.nvim_set_current_win(term.win)
+
+				restore()
+				assert.are.equal(1, #captured)
+				assert.are.equal("single", captured[1])
+				vim.api.nvim_win_close(editor_win, true)
+			end)
+
+			it("passes 'active' and 'inactive' when switching between two terminals", function()
+				highlights.setup()
+				local terminal = require("termite.terminal")
+				local editor_win = make_editor_win()
+				local term1 = terminal.create()
+				terminal.create()
+				assert.are.equal(2, #state.terminals)
+
+				vim.api.nvim_set_current_win(editor_win)
+
+				local captured, restore = spy_on_build_highlighted_border()
+
+				vim.api.nvim_set_current_win(term1.win)
+
+				restore()
+				assert.are.equal(2, #captured)
+				assert.are.equal("active", captured[1], "first terminal should be active")
+				assert.are.equal("inactive", captured[2], "second terminal should be inactive")
+				vim.api.nvim_win_close(editor_win, true)
+			end)
+
+			it("does not call build_highlighted_border when entering a non-termite window", function()
+				highlights.setup()
+				local terminal = require("termite.terminal")
+				local editor_win = make_editor_win()
+				terminal.create()
+				terminal.create()
+				assert.are.equal(2, #state.terminals)
+
+				-- Create a non-termite window to switch to
+				local other_buf = vim.api.nvim_create_buf(false, true)
+				local other_win = vim.api.nvim_open_win(other_buf, true, {
+					relative = "editor",
+					width = 10,
+					height = 10,
+					row = 0,
+					col = 0,
+				})
+
+				vim.api.nvim_set_current_win(editor_win)
+
+				local captured, restore = spy_on_build_highlighted_border()
+
+				vim.api.nvim_set_current_win(other_win)
+
+				restore()
+				assert.are.equal(0, #captured, "should not update borders for non-termite windows")
+				vim.api.nvim_win_close(other_win, true)
+				vim.api.nvim_win_close(editor_win, true)
+			end)
 		end)
 	end)
 end)

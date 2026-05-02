@@ -97,7 +97,7 @@ M.create = function()
 	local buf = vim.api.nvim_create_buf(false, true)
 
 	-- Open a floating window with the computed geometry.
-	local win = vim.api.nvim_open_win(buf, true, {
+	local ok, win = pcall(vim.api.nvim_open_win, buf, true, {
 		anchor = win_config.anchor,
 		border = win_config.border,
 		col = win_config.col,
@@ -108,6 +108,10 @@ M.create = function()
 		width = win_config.width,
 		zindex = win_config.zindex,
 	})
+	if not ok then
+		vim.api.nvim_buf_delete(buf, { force = true })
+		return nil
+	end
 
 	-- Apply window options.
 	for opt, val in pairs(config.values.wo) do
@@ -178,7 +182,7 @@ M.show = function(term)
 		return
 	end
 
-	local win = vim.api.nvim_open_win(term.buf, false, {
+	local ok, win = pcall(vim.api.nvim_open_win, term.buf, false, {
 		anchor = term.config.anchor,
 		border = term.config.border,
 		col = term.config.col,
@@ -189,6 +193,9 @@ M.show = function(term)
 		width = term.config.width,
 		zindex = term.config.zindex,
 	})
+	if not ok then
+		return
+	end
 
 	term.win = win
 

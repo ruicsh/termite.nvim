@@ -75,8 +75,8 @@ Default configuration:
     keymaps = {
       toggle = "<C-\\>",   -- Toggle all terminals
       create = "<C-t>",    -- Create new terminal
-      next = "<C-j>",      -- Focus next terminal
-      prev = "<C-k>",      -- Focus previous terminal
+      next = "<C-n>",      -- Focus next terminal
+      prev = "<C-p>",      -- Focus previous terminal
       focus_editor = "<C-e>",  -- Focus editor window
       normal_mode = "<C-[>",   -- Exit to normal mode
       maximize = "<C-z>",      -- Maximize/restore terminal
@@ -228,19 +228,11 @@ Default keymaps:
 
   Smart toggle: When terminals are visible and you press <C-\> while focus is
   on the editor, it focuses the terminals instead of hiding them.
-    <C-j>       Focus next terminal
-    <C-k>       Focus previous terminal
+    <C-n>       Focus next terminal
+    <C-p>       Focus previous terminal
     <C-e>       Focus editor window
     <C-[>       Exit to normal mode
     <C-z>       Maximize/restore terminal
-
-  Normal Mode (within terminal):
-    q              Close current terminal
-    <LeftRelease>  Enter insert mode on click (when click_to_insert = true)
-
-  Normal Mode (global):
-    <C-\\>      Toggle all terminals
-    <C-t>       Create new terminal
 
 ================================================================================
 6. COMMANDS                                            *termite-commands*
